@@ -1,0 +1,294 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from functools import partial
+
+from timm.models.layers import DropPath, trunc_normal_, Mlp
+from timm.models.registry import register_model
+from timm.models.vision_transformer import _cfg, LayerScale, Attention
+import math
+import numpy as np
+
+from ..function import WaveAttention, StdAttention
+from ..model_config import ModelConfig
+
+class WaveVitConfig(ModelConfig):
+    """
+        model_name format: wavevit_(attn_type)_(scale)_(patch_size)
+    """
+    num_classes = 7
+    seq_len = 224
+    n_channel = 52
+    patch_size = 16
+    d_model = 768
+    num_layer = 12
+    n_head = 12
+    dim_mlp_hidden = 2048
+    expansion_factor = 4
+    dropout = 0.1
+    pooling = False
+    MAX_PATCH_NUMS = 1000
+    attn_type = 'wave'
+    norm_layer = nn.LayerNorm
+
+    def __init__(self, model_name: str):
+        super(WaveVitConfig, self).__init__(model_name)
+        # wavevit_wave_s_16
+        _, attn_type, scale, patch_size = model_name.split('_')
+        self.patch_size = int(patch_size)
+        self.attn_type = attn_type
+        if scale == 'es':
+            # Extra Small
+            self.d_model = 128
+            self.num_layer = 2
+            self.n_head = 4
+        elif scale == 'ms':
+            # Medium Small
+            self.d_model = 256
+            self.num_layer = 4
+            self.n_head = 8
+        elif scale == 's':
+            # Small
+            self.d_model = 512
+            self.num_layer = 8
+            self.n_head = 8
+        elif scale == 'b':
+            # Base
+            self.d_model = 768
+            self.num_layer = 12
+            self.n_head = 12
+
+class SimpleSpanCLSHead(nn.Module):
+    def __init__(self, hidden_dim, n_class):
+        super(SimpleSpanCLSHead, self).__init__()
+
+        self.head_1 = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.head_2 = nn.Linear(hidden_dim, n_class, bias=False)
+
+        nn.init.xavier_uniform_(self.head_1.weight)
+        nn.init.xavier_uniform_(self.head_2.weight)
+
+    def forward(self, features):
+        return self.head_2(self.head_1(features))
+
+
+class Block(nn.Module):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 dim_mlp_hidden = 2048,
+                 dropout = 0.1,
+                 norm_layer = nn.LayerNorm,
+                 attn_type = 'wave',
+                 act_layer = nn.GELU,
+                 qkv_bias = True,
+                 attn_drop = 0.,
+                 init_values=None,
+                 drop_path=0.,
+                 sr_ratio=1
+                 ):
+        super().__init__()
+
+        self.norm1 = norm_layer(dim)
+        self.norm2 = norm_layer(dim)
+
+        self.mlp = Mlp(in_features=dim, hidden_features=dim_mlp_hidden, act_layer=act_layer, drop=dropout)
+
+        # --------------------------------------------------------------------------
+        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        self.drop_path1 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        # --------------------------------------------------------------------------
+
+        if attn_type == 'wave':
+            self.attn = WaveAttention(dim=dim, num_heads=num_heads, qkv_bias=qkv_bias, sr_ratio=sr_ratio)
+        elif attn_type == 'timm':
+            self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        # else:
+        #     self.attn = StdAttention()
+
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            # we use xavier_uniform following official JAX ViT:
+            torch.nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+
+    def forward(self, x):
+        x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
+        x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
+        return x
+
+class WaveVit(nn.Module):
+
+    def __init__(self,
+                 model_name = 'wavevit_timm_s_16',
+                 num_classes = 10,
+                 n_channel = 90,
+                 patch_size = 16,
+                 embed_dim = 768,
+                 num_head = 12,
+                 # dim_mlp_hidden = 2048,
+                 expansion_factor=4,
+                 depth = 12,
+                 MAX_PATCH_NUMS = 1000,
+                 pooling = False,
+                 attn_type='wave',
+                 norm_layer=nn.LayerNorm):
+
+        super().__init__()
+        self.model_name = model_name
+        self.embed_dim = embed_dim
+        self.n_channel = n_channel
+        self.num_classes = num_classes
+        self.patch_size = patch_size
+        self.depth = depth
+        self.MAX_PATCH_NUMS = MAX_PATCH_NUMS
+        self.pooling = pooling
+        self.dim_mlp_hidden = embed_dim * expansion_factor
+        # --------------------------------------------------------------------------
+        #
+        self.cls_embed = nn.Parameter(torch.empty((1, 1, embed_dim)), requires_grad=True)
+        self.pos_embed = nn.Parameter(torch.empty((1, 1 + MAX_PATCH_NUMS, embed_dim)),
+                                      requires_grad=True)
+
+        self.embedding = nn.Linear(n_channel * patch_size, embed_dim, bias=False)
+
+        self.blocks = nn.ModuleList([Block(dim=embed_dim,
+                                           num_heads=num_head,
+                                           dim_mlp_hidden=self.dim_mlp_hidden,
+                                           dropout=0.1,
+                                           # attn_type='timm',
+                                           attn_type= attn_type,
+                                           sr_ratio = 1)
+                                     for i in range(depth)])
+        self.norm = norm_layer(embed_dim)
+
+        # self.head = SimpleSpanCLSHead(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+
+        nn.init.xavier_uniform_(self.cls_embed.data)
+        nn.init.xavier_uniform_(self.pos_embed.data)
+
+        self.apply(self._init_weights)
+        # --------------------------------------------------------------------------
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            # we use xavier_uniform following official JAX ViT:
+            torch.nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def _pickup_patching(self, batch_data):
+        # batch_size, n_channels, seq_len
+        batch_size, n_channels, seq_len = batch_data.size()
+        if (seq_len % self.patch_size != 0):
+            batch_data = F.pad(batch_data,
+                               (0, self.patch_size - (seq_len % self.patch_size)),
+                               'constant', 0)
+            batch_size, n_channels, seq_len = batch_data.size()
+        assert seq_len % self.patch_size == 0
+
+        batch_data = batch_data.view(batch_size, n_channels, seq_len // self.patch_size, self.patch_size)
+        batch_data = batch_data.permute(0, 2, 1, 3)
+        batch_data = batch_data.reshape(batch_size, seq_len // self.patch_size, n_channels * self.patch_size)
+        return batch_data
+
+    def forward(self, x):
+        x = self._pickup_patching(x)
+        x = self.embedding(x)
+        batch_size, num_patches, _ = x.size()
+        # 拼接CLS向量
+        x = torch.cat((self.cls_embed.repeat(batch_size, 1, 1), x), dim=1)
+        # 加上Position Embedding
+        x = x + self.pos_embed.repeat(batch_size, 1, 1)[:, :1 + num_patches, :]
+        for blk in self.blocks:
+            x = blk(x)
+
+        x = self.norm(x)
+
+        if self.pooling:
+            x = torch.mean(x, dim=1)
+        else:
+            x = x[:, 0, :]
+
+        # x = self.head(x)
+
+        return x
+
+    def get_output_size(self):
+        return self.embed_dim
+
+    def get_model_name(self):
+        return self.model_name
+
+def waveVit_wifi(config: WaveVitConfig):
+    model = WaveVit(
+        model_name=config.model_name,
+        num_classes=config.num_classes,
+        n_channel=config.n_channel,
+        patch_size=config.patch_size,
+        embed_dim=config.d_model,
+        num_head=config.n_head,
+        expansion_factor=config.expansion_factor,
+        depth=config.num_layer,
+        MAX_PATCH_NUMS=config.MAX_PATCH_NUMS,
+        pooling=config.pooling,
+        attn_type=config.attn_type,
+        norm_layer=config.norm_layer
+    )
+    return model
+
+if __name__ == '__main__':
+    # seq_len // self.patch_size 必须得是一个奇数
+
+    # inputs = np.ones((2, 30, 1584))
+    # inputs = torch.from_numpy(inputs).float().to(torch.device('cuda'))
+    # print(inputs.shape)
+    # wave_vit = WaveVit(embed_dim = 480,
+    #                    num_head = 8,
+    #                    n_channel = 30).to(torch.device('cuda'))
+    # wave_vit(inputs)
+
+    inputs = np.ones((2, 5, 6))
+    inputs = np.array([
+        [
+            [1,2,3,4,5],
+            [6,7,8,9,10],
+            [11,12,13,14,15]
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            [11, 12, 13, 14, 15]
+        ]
+    ])
+    print(inputs.shape)
+    # print(inputs)
+    inputs = torch.from_numpy(inputs).float()
+    batch_data = F.pad(inputs,
+                       (0, 4 - (5 % 4)),
+                       'constant', 0)
+    # print(batch_data)
+    batch_size, n_channels, seq_len = batch_data.size()
+    # print(batch_data.shape)
+    # print(batch_data)
+    batch_data = batch_data.view(batch_size, n_channels, seq_len // 4, 4)
+
+    batch_data = batch_data.permute(0, 2, 1, 3)
+    batch_data = batch_data.reshape(batch_size, seq_len // 4, n_channels * 4)
+    print(batch_data.shape)
+    print(batch_data.transpose(1,2))
+    print(batch_data)
+
+

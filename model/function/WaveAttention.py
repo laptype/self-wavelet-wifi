@@ -1,0 +1,166 @@
+import torch
+import torch.nn as nn
+from .torch_wavelets_1D import DWT_1D, IDWT_1D
+
+
+class WaveAttention(nn.Module):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 sr_ratio = 4
+                 ):
+        super().__init__()
+        assert dim % num_heads == 0, 'dim should be divisible by num_heads'
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
+        self.sr_ratio = sr_ratio
+        # --------------------------------------------------------------------------
+        self.dwt = DWT_1D(wave = 'haar')
+        self.idwt = IDWT_1D(wave='haar')
+        self.reduce = nn.Sequential(
+            nn.Conv1d(dim, dim // 2, kernel_size=1, padding=0, stride=1),
+            nn.BatchNorm1d(dim // 2),
+            nn.ReLU(inplace=True)
+        )
+        self.filter = nn.Sequential(
+            nn.Conv1d(dim, dim, kernel_size=3, padding=1, stride=1, groups=1),
+            nn.BatchNorm1d(dim),
+            nn.ReLU(inplace=True)
+        )
+        self.kv_embed = nn.Conv1d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio) if sr_ratio > 1 else nn.Identity()
+        # --------------------------------------------------------------------------
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
+        self.kv = nn.Sequential(
+            nn.LayerNorm(dim),
+            nn.Linear(dim, dim * 2, bias=qkv_bias)
+        )
+        self.proj = nn.Linear(dim + dim // 2, dim)
+        # self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            # we use xavier_uniform following official JAX ViT:
+            torch.nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        # --------------------------------------------------------------------------
+        elif isinstance(m, nn.Conv1d):
+            nn.init.xavier_uniform_(m.weight)
+        elif isinstance(m, nn.BatchNorm1d):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def forward(self, x):
+        
+        B, N, C = x.shape       # [2, 101, 480]
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)    # [2, 8, 100, 60]
+
+        x = x.permute(0,2,1)
+        x_dwt = self.dwt(self.reduce(x))     # [2, 480, 50]
+        x_dwt = self.filter(x_dwt)
+
+        x_idwt = self.idwt(x_dwt).transpose(1, 2)  # [2, 100, 240]
+        kv = self.kv_embed(x_dwt).reshape(B, C, -1).permute(0,2,1)   # [2, 12, 480]
+        kv = self.kv(kv).reshape(B, -1, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)     # [2, 2, 8, 12, 60]
+        k, v = kv[0], kv[1]     # [2, 8, 12, 60]
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale       # [2, 8, 100, 12]
+        attn = attn.softmax(dim=-1)
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C)     # [2, 100, 480]
+        x = self.proj(torch.cat([x, x_idwt], dim=-1))       # [2, 100, 480]
+
+        return x
+
+
+class WaveAttention2(nn.Module):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 sr_ratio=4
+                 ):
+        super().__init__()
+        assert dim % num_heads == 0, 'dim should be divisible by num_heads'
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
+        self.sr_ratio = sr_ratio
+        # --------------------------------------------------------------------------
+        self.dwt = DWT_1D(wave='haar')
+        self.idwt = IDWT_1D(wave='haar')
+        self.reduce = nn.Sequential(
+            nn.Conv1d(dim, dim // 2, kernel_size=1, padding=0, stride=1),
+            nn.BatchNorm1d(dim // 2),
+            nn.ReLU(inplace=True)
+        )
+        self.filter = nn.Sequential(
+            nn.Conv1d(dim, dim, kernel_size=3, padding=1, stride=1, groups=1),
+            nn.BatchNorm1d(dim),
+            nn.ReLU(inplace=True)
+        )
+        self.kv_embed = nn.Conv1d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio) if sr_ratio > 1 else nn.Identity()
+        # --------------------------------------------------------------------------
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
+        self.kv = nn.Sequential(
+            nn.LayerNorm(dim),
+            nn.Linear(dim, dim * 2, bias=qkv_bias)
+        )
+        self.proj = nn.Linear(dim + dim // 2, dim)
+        # self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            # we use xavier_uniform following official JAX ViT:
+            torch.nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        # --------------------------------------------------------------------------
+        elif isinstance(m, nn.Conv1d):
+            nn.init.xavier_uniform_(m.weight)
+        elif isinstance(m, nn.BatchNorm1d):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def forward(self, x):
+
+        B, N, C = x.shape       # [2, 101, 480]
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)    # [2, 8, 101, 60]
+
+
+
+
+        return x
+
+
+class StdAttention(nn.Module):
+    pass
+
+
+if __name__ == '__main__':
+    import numpy as np
+    def _pickup_patching(batch_data):
+        # batch_size, n_channels, seq_len
+        batch_size, n_channels, seq_len = batch_data.size()
+        patch_size = 16
+        assert seq_len % patch_size == 0
+        batch_data = batch_data.view(batch_size, n_channels, seq_len // patch_size, patch_size)
+        batch_data = batch_data.permute(0, 2, 1, 3)
+        batch_data = batch_data.reshape(batch_size, seq_len // patch_size, n_channels * patch_size)
+        return batch_data
+    inputs = np.ones((2, 30, 1600))
+    inputs = torch.from_numpy(inputs).float().to(torch.device('cuda'))
+    print(inputs.shape)
+    inputs = _pickup_patching(inputs)
+    print(inputs.shape)
+    wave_attn = WaveAttention2(dim=480).to(torch.device('cuda'))
+    wave_attn(inputs)
