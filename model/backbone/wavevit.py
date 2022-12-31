@@ -61,7 +61,7 @@ class WaveVitConfig(ModelConfig):
         elif scale == 'test':
             # Base
             self.d_model = 768
-            self.num_layer = 1
+            self.num_layer = 8
             self.n_head = 8
 
 class SimpleSpanCLSHead(nn.Module):
@@ -186,16 +186,7 @@ class WaveVit(nn.Module):
                                     attn_type=self.attn_type,
                                     sr_ratio=1))
 
-
-        self.blocks = nn.ModuleList([Block(dim=embed_dim,
-                                           num_heads=num_head,
-                                           N_dim = self.N_dim,
-                                           dim_mlp_hidden=self.dim_mlp_hidden,
-                                           dropout=0.1,
-                                           # attn_type='timm',
-                                           attn_type= attn_type,
-                                           sr_ratio = 1)
-                                     for i in range(depth)])
+        self.blocks = nn.ModuleList(model_list)
         self.norm = norm_layer(embed_dim)
 
         # self.head = SimpleSpanCLSHead(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
