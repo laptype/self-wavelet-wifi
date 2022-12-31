@@ -81,38 +81,41 @@ class WaveAttention(nn.Module):
 class WaveAttention2(nn.Module):
     def __init__(self,
                  dim,
+                 N_dim,
                  num_heads=8,
                  qkv_bias=False,
-                 sr_ratio=4
+                 sr_ratio=4,
+                 attn_drop=0.,
+                 proj_drop=0.
                  ):
         super().__init__()
-        assert dim % num_heads == 0, 'dim should be divisible by num_heads'
+        # assert dim % 2 == 0, "dim should be divisible by 2"
+        assert (dim // 2) % num_heads == 0, 'dim should be divisible by num_heads // 2'
         self.num_heads = num_heads
-        head_dim = dim // num_heads
+        head_dim = (dim // 2) // num_heads
         self.scale = head_dim ** -0.5
-        self.sr_ratio = sr_ratio
         # --------------------------------------------------------------------------
         self.dwt = DWT_1D(wave='haar')
         self.idwt = IDWT_1D(wave='haar')
-        self.reduce = nn.Sequential(
-            nn.Conv1d(dim, dim // 2, kernel_size=1, padding=0, stride=1),
-            nn.BatchNorm1d(dim // 2),
-            nn.ReLU(inplace=True)
-        )
+
+        # print(f'N_dim {N_dim}')
         self.filter = nn.Sequential(
-            nn.Conv1d(dim, dim, kernel_size=3, padding=1, stride=1, groups=1),
-            nn.BatchNorm1d(dim),
+            nn.Conv1d((N_dim+1)*2, (N_dim+1)*2, kernel_size=3, padding=1, stride=1, groups=1),
+            nn.BatchNorm1d((N_dim+1)*2),
             nn.ReLU(inplace=True)
         )
-        self.kv_embed = nn.Conv1d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio) if sr_ratio > 1 else nn.Identity()
-        # --------------------------------------------------------------------------
-        self.q = nn.Linear(dim, dim, bias=qkv_bias)
-        self.kv = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, dim * 2, bias=qkv_bias)
+        self.reduce = nn.Sequential(
+            nn.Conv1d((N_dim+1)*2, (N_dim+1), kernel_size=1, padding=0, stride=1),
+            nn.BatchNorm1d((N_dim+1)),
+            nn.ReLU(inplace=True)
         )
+        # --------------------------------------------------------------------------
+
+        self.qkv = nn.Linear(dim // 2, dim // 2 * 3, bias=qkv_bias)
+
+        self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim + dim // 2, dim)
-        # self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.proj_drop = nn.Dropout(proj_drop)
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -132,12 +135,23 @@ class WaveAttention2(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     def forward(self, x):
+                                    # [128, 126, 768]   [B, N, D]
+        x = self.dwt(x)             # [128, 252, 384]   [B, 2*N, D//2]
+        x_idwt = self.filter(x)     # [128, 252, 384]   [B, 2*N, D//2]
+        x_idwt = self.idwt(x_idwt)  # [128, 126, 768]   [B, N, D]
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)     # [128, 8, 252, 48]   [B, heads, 2*N, D//2 // heads]
+        attn = (q @ k.transpose(-2, -1)) * self.scale   # [128, 8, 252, 252]
+        print(f'attn: {attn.shape}')
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
 
-        B, N, C = x.shape       # [2, 101, 480]
-        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)    # [2, 8, 101, 60]
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C) # [128, 252, 384] [B, 2*N, D//2]
 
-
-
+        x = self.reduce(x)                              # [128, 126, 384] [B, N, D//2]
+        x = self.proj(torch.cat([x, x_idwt], dim=-1))   # [128, 126, 1152] [B, N, 3D//2]
+        x = self.proj_drop(x)                           # [128, 126, 768] [B, N, D]
 
         return x
 

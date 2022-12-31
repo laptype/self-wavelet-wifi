@@ -9,7 +9,7 @@ from timm.models.vision_transformer import _cfg, LayerScale, Attention
 import math
 import numpy as np
 
-from ..function import WaveAttention, StdAttention
+from ..function import WaveAttention, StdAttention, WaveAttention2
 from ..model_config import ModelConfig
 
 class WaveVitConfig(ModelConfig):
@@ -28,6 +28,7 @@ class WaveVitConfig(ModelConfig):
     dropout = 0.1
     pooling = False
     MAX_PATCH_NUMS = 1000
+
     attn_type = 'wave'
     norm_layer = nn.LayerNorm
 
@@ -57,6 +58,11 @@ class WaveVitConfig(ModelConfig):
             self.d_model = 768
             self.num_layer = 12
             self.n_head = 12
+        elif scale == 'test':
+            # Base
+            self.d_model = 768
+            self.num_layer = 1
+            self.n_head = 8
 
 class SimpleSpanCLSHead(nn.Module):
     def __init__(self, hidden_dim, n_class):
@@ -76,6 +82,7 @@ class Block(nn.Module):
     def __init__(self,
                  dim,
                  num_heads,
+                 N_dim,
                  dim_mlp_hidden = 2048,
                  dropout = 0.1,
                  norm_layer = nn.LayerNorm,
@@ -105,6 +112,8 @@ class Block(nn.Module):
             self.attn = WaveAttention(dim=dim, num_heads=num_heads, qkv_bias=qkv_bias, sr_ratio=sr_ratio)
         elif attn_type == 'timm':
             self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        elif attn_type == 'wave2':
+            self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,)
         # else:
         #     self.attn = StdAttention()
 
@@ -122,6 +131,7 @@ class Block(nn.Module):
 
 
     def forward(self, x):
+
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
         return x
@@ -132,6 +142,7 @@ class WaveVit(nn.Module):
                  model_name = 'wavevit_timm_s_16',
                  num_classes = 10,
                  n_channel = 90,
+                 seq_len = 2000,
                  patch_size = 16,
                  embed_dim = 768,
                  num_head = 12,
@@ -147,6 +158,8 @@ class WaveVit(nn.Module):
         self.model_name = model_name
         self.embed_dim = embed_dim
         self.n_channel = n_channel
+        self.seq_len = seq_len
+        self.N_dim = seq_len // patch_size
         self.num_classes = num_classes
         self.patch_size = patch_size
         self.depth = depth
@@ -163,6 +176,7 @@ class WaveVit(nn.Module):
 
         self.blocks = nn.ModuleList([Block(dim=embed_dim,
                                            num_heads=num_head,
+                                           N_dim = self.N_dim,
                                            dim_mlp_hidden=self.dim_mlp_hidden,
                                            dropout=0.1,
                                            # attn_type='timm',
@@ -205,13 +219,18 @@ class WaveVit(nn.Module):
         return batch_data
 
     def forward(self, x):
+        print(f'input data x: {x.shape}')
         x = self._pickup_patching(x)
+        print('1',x.shape)      # [128, 125, 1440]
         x = self.embedding(x)
+        print('2',x.shape)      # [128, 125, 768]
         batch_size, num_patches, _ = x.size()
         # 拼接CLS向量
         x = torch.cat((self.cls_embed.repeat(batch_size, 1, 1), x), dim=1)
         # 加上Position Embedding
         x = x + self.pos_embed.repeat(batch_size, 1, 1)[:, :1 + num_patches, :]
+        print('cat x:', x.shape)    # [128, 126, 768]
+
         for blk in self.blocks:
             x = blk(x)
 
@@ -237,6 +256,7 @@ def waveVit_wifi(config: WaveVitConfig):
         model_name=config.model_name,
         num_classes=config.num_classes,
         n_channel=config.n_channel,
+        seq_len=config.seq_len,
         patch_size=config.patch_size,
         embed_dim=config.d_model,
         num_head=config.n_head,

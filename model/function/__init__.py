@@ -1,4 +1,4 @@
-from .WaveAttention import WaveAttention, StdAttention
+from .WaveAttention import WaveAttention, StdAttention, WaveAttention2
 
 
 
@@ -6,4 +6,5 @@ from .WaveAttention import WaveAttention, StdAttention
 __all__ = [
     WaveAttention,
     StdAttention,
+    WaveAttention2,
 ]
