@@ -14,7 +14,7 @@ from ..model_config import ModelConfig
 
 class WaveVitConfig(ModelConfig):
     """
-        model_name format: wavevit_(attn_type)_(scale)_(patch_size)
+        model_name format: wavevit_(attn_type)_(attn_type_ratio)_(scale)_(patch_size)
     """
     num_classes = 7
     seq_len = 224
@@ -34,8 +34,9 @@ class WaveVitConfig(ModelConfig):
 
     def __init__(self, model_name: str):
         super(WaveVitConfig, self).__init__(model_name)
-        # wavevit_wave_s_16
-        _, attn_type, scale, patch_size = model_name.split('_')
+        # wavevit_wave_4_s_16
+        _, attn_type, attn_type_layer, scale, patch_size = model_name.split('_')
+        self.attn_type_layer = int(attn_type_layer)
         self.patch_size = int(patch_size)
         self.attn_type = attn_type
         if scale == 'es':
@@ -150,6 +151,7 @@ class WaveVit(nn.Module):
                  MAX_PATCH_NUMS = 1000,
                  pooling = False,
                  attn_type='wave',
+                 attn_type_layer = 4,
                  norm_layer=nn.LayerNorm):
 
         super().__init__()
@@ -174,7 +176,7 @@ class WaveVit(nn.Module):
 
         model_list = []
         for i in range(depth):
-            self.attn_type = 'timm' if i >= 4 else attn_type
+            self.attn_type = 'timm' if i >= attn_type_layer else attn_type
             model_list.append(Block(dim=embed_dim,
                                     num_heads=num_head,
                                     N_dim=self.N_dim,
@@ -263,6 +265,7 @@ def waveVit_wifi(config: WaveVitConfig):
         MAX_PATCH_NUMS=config.MAX_PATCH_NUMS,
         pooling=config.pooling,
         attn_type=config.attn_type,
+        attn_type_layer=config.attn_type_layer,
         norm_layer=config.norm_layer
     )
     return model
