@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     model_list = [
 
-        ('wavevit_timm_s_16', 'vit_span_cls_raw', 128),
+        ('wavevit_wave2_s_16', 'vit_span_cls_raw', 128),
 
     ]
     config.dataset_list.append(f'WiAR_0.8')
@@ -42,7 +42,9 @@ if __name__ == '__main__':
             #     './script_run.sh %d %s %s %s %s %d' %
             #     (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size)
             # )
+            # os.chdir("D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi")
             os.chdir("D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi")
+
             os.system('conda activate test')
             os.system(
                 f'python main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \

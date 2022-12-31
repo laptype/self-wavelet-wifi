@@ -107,13 +107,12 @@ class Block(nn.Module):
         self.drop_path1 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         # --------------------------------------------------------------------------
-
         if attn_type == 'wave':
             self.attn = WaveAttention(dim=dim, num_heads=num_heads, qkv_bias=qkv_bias, sr_ratio=sr_ratio)
         elif attn_type == 'timm':
             self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wave2':
-            self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,)
+            self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:
         #     self.attn = StdAttention()
 
@@ -131,7 +130,6 @@ class Block(nn.Module):
 
 
     def forward(self, x):
-
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
         return x
