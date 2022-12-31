@@ -174,6 +174,19 @@ class WaveVit(nn.Module):
 
         self.embedding = nn.Linear(n_channel * patch_size, embed_dim, bias=False)
 
+        model_list = []
+        for i in range(depth):
+            self.attn_type = 'timm' if i >= 4 else attn_type
+            model_list.append(Block(dim=embed_dim,
+                                    num_heads=num_head,
+                                    N_dim=self.N_dim,
+                                    dim_mlp_hidden=self.dim_mlp_hidden,
+                                    dropout=0.1,
+                                    # attn_type='timm',
+                                    attn_type=self.attn_type,
+                                    sr_ratio=1))
+
+
         self.blocks = nn.ModuleList([Block(dim=embed_dim,
                                            num_heads=num_head,
                                            N_dim = self.N_dim,
@@ -219,17 +232,13 @@ class WaveVit(nn.Module):
         return batch_data
 
     def forward(self, x):
-        print(f'input data x: {x.shape}')
         x = self._pickup_patching(x)
-        print('1',x.shape)      # [128, 125, 1440]
         x = self.embedding(x)
-        print('2',x.shape)      # [128, 125, 768]
         batch_size, num_patches, _ = x.size()
         # 拼接CLS向量
         x = torch.cat((self.cls_embed.repeat(batch_size, 1, 1), x), dim=1)
         # 加上Position Embedding
         x = x + self.pos_embed.repeat(batch_size, 1, 1)[:, :1 + num_patches, :]
-        print('cat x:', x.shape)    # [128, 126, 768]
 
         for blk in self.blocks:
             x = blk(x)
