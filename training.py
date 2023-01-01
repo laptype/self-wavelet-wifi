@@ -3,7 +3,7 @@ import logging
 
 from torch.utils.data.dataloader import DataLoader
 
-from pipeline import Trainer
+from pipeline import Trainer, Tester
 from config import TrainConfig
 
 import init_util
@@ -21,6 +21,8 @@ def train(config: TrainConfig):
                                        config.strategy_name,
                                        train_dataset.get_n_channels(),
                                        train_dataset.get_seq_lens())
+
+    # ----------------------------- TRAIN---------------------------
 
     trainer = Trainer(
         strategy=strategy,
@@ -41,3 +43,14 @@ def train(config: TrainConfig):
     )
 
     trainer.training()
+
+    # ----------------------------- TEST---------------------------
+    tester = Tester(
+        strategy=strategy,
+        eval_data_loader=DataLoader(eval_dataset, batch_size=config.train_batch_size, shuffle=False),
+        n_classes=eval_dataset.get_n_classes(),
+        output_path=config.check_point_path,
+        use_gpu=False if config.gpu_device is None else True,
+    )
+
+    tester.testing()
