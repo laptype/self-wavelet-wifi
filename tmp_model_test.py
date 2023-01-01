@@ -24,7 +24,8 @@ class Config:
     dataset_name = 'WiAR_0.8'
     datasource_path = 'D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset\WiAR'
 
-    backbone_name = 'wavevit_wavelh_4_test_16'
+    # backbone_name = 'wavevit_wave12_4_test_16'
+    backbone_name = 'wavevit_wavelh2_4_test_16'
     head_name= 'wifi_ar_span_cls'
     strategy_name = 'vit_span_cls_raw'
 

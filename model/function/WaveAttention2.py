@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 from .torch_wavelets_1D import DWT_1D, IDWT_1D
 
-
-class WaveAttention(nn.Module):
+class WaveAttention_2(nn.Module):
     def __init__(self,
                  dim,
+                 N_dim,
                  num_heads=8,
                  qkv_bias=False,
                  sr_ratio = 4
@@ -20,7 +20,7 @@ class WaveAttention(nn.Module):
         self.dwt = DWT_1D(wave = 'haar')
         self.idwt = IDWT_1D(wave='haar')
         self.reduce = nn.Sequential(
-            nn.Conv1d(dim, dim // 2, kernel_size=1, padding=0, stride=1),
+            nn.Conv1d(N_dim, dim // 2, kernel_size=1, padding=0, stride=1),
             nn.BatchNorm1d(dim // 2),
             nn.ReLU(inplace=True)
         )
@@ -58,10 +58,13 @@ class WaveAttention(nn.Module):
 
     def forward(self, x):
         print('input: ',x.shape)
-        B, N, C = x.shape       # [2, 101, 480]
+        B, N, C = x.shape       # [128, 126, 768]
         q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)    # [2, 8, 100, 60]
+        print(q.shape)
 
-        x = x.permute(0,2,1)
+        x_dwt = self.dwt(x)
+        print(f'x dwt: {x_dwt.shape}')
+        x = self.reduce(x_dwt)
         x_dwt = self.dwt(self.reduce(x))     # [2, 480, 50]
         x_dwt = self.filter(x_dwt)
         print('q', x_dwt.shape)
@@ -77,8 +80,7 @@ class WaveAttention(nn.Module):
 
         return x
 
-
-class WaveAttention2(nn.Module):
+class WaveAttention2_2(nn.Module):
     def __init__(self,
                  dim,
                  N_dim,
@@ -109,8 +111,8 @@ class WaveAttention2(nn.Module):
             nn.ReLU(inplace=True)
         )
         # --------------------------------------------------------------------------
-
-        self.qkv = nn.Linear(dim // 2, dim // 2 * 3, bias=qkv_bias)
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
+        self.kv = nn.Linear(dim // 2, dim // 2 * 2, bias=qkv_bias)
 
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim + dim // 2, dim)
@@ -136,8 +138,8 @@ class WaveAttention2(nn.Module):
     def forward(self, x):
                                     # [128, 126, 768]   [B, N, D]
         x = self.dwt(x)             # [128, 252, 384]   [B, 2*N, D//2]
-        x_idwt = self.filter(x)     # [128, 252, 384]   [B, 2*N, D//2]
-        x_idwt = self.idwt(x_idwt)  # [128, 126, 768]   [B, N, D]
+        x = self.filter(x)     # [128, 252, 384]   [B, 2*N, D//2]
+        x_idwt = self.idwt(x)  # [128, 126, 768]   [B, N, D]
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv.unbind(0)     # [128, 8, 252, 48]   [B, heads, 2*N, D//2 // heads]
@@ -153,8 +155,7 @@ class WaveAttention2(nn.Module):
 
         return x
 
-
-class WaveAttention_lh(nn.Module):
+class WaveAttention_lh2(nn.Module):
     def __init__(self,
                  dim,
                  N_dim,
@@ -174,11 +175,11 @@ class WaveAttention_lh(nn.Module):
         self.idwt = IDWT_1D(wave='haar')
 
         # print(f'N_dim {N_dim}')
-        # self.filter = nn.Sequential(
-        #     nn.Conv1d((N_dim+1)*2, (N_dim+1)*2, kernel_size=3, padding=1, stride=1, groups=1),
-        #     nn.BatchNorm1d((N_dim+1)*2),
-        #     nn.ReLU(inplace=True)
-        # )
+        self.filter = nn.Sequential(
+            nn.Conv1d((N_dim+1)*2, (N_dim+1)*2, kernel_size=3, padding=1, stride=1, groups=1),
+            nn.BatchNorm1d((N_dim+1)*2),
+            nn.ReLU(inplace=True)
+        )
         # self.reduce = nn.Sequential(
         #     nn.Conv1d((N_dim+1)*2, (N_dim+1), kernel_size=1, padding=0, stride=1),
         #     nn.BatchNorm1d((N_dim+1)),
@@ -189,7 +190,7 @@ class WaveAttention_lh(nn.Module):
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
 
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim)
+        self.proj = nn.Linear(dim * 2, dim)
         self.proj_drop = nn.Dropout(proj_drop)
         self.apply(self._init_weights)
 
@@ -213,7 +214,11 @@ class WaveAttention_lh(nn.Module):
                                     # [128, 126, 768]   [B, N, D]
         B, N, _ = x.shape
         x = self.dwt(x)             # [128, 252, 384]   [B, 2*N, D//2]
+
         _, _, C = x.shape
+
+        x = self.filter(x)
+        x_idwt = self.idwt(x)
 
         x = x.reshape(B, 2, N, C).permute(0, 2, 1, 3)
         # x_hl = x[:,:,[1,0],:].reshape(B, N, 2*C)
@@ -226,7 +231,7 @@ class WaveAttention_lh(nn.Module):
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, 2*C)
-        x = self.proj(x)
+        x = self.proj(torch.cat([x, x_idwt], dim=-1))
         x = self.proj_drop(x)
         return x
 
@@ -250,5 +255,5 @@ if __name__ == '__main__':
     print(inputs.shape)
     inputs = _pickup_patching(inputs)
     print(inputs.shape)
-    # wave_attn = WaveAttention2(dim=480).to(torch.device('cuda'))
-    # wave_attn(inputs)
+    wave_attn = WaveAttention2(dim=480).to(torch.device('cuda'))
+    wave_attn(inputs)

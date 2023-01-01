@@ -9,7 +9,14 @@ from timm.models.vision_transformer import _cfg, LayerScale, Attention
 import math
 import numpy as np
 
-from ..function import WaveAttention, StdAttention, WaveAttention2, WaveAttention_lh
+from ..function import (
+    WaveAttention,
+    StdAttention,
+    WaveAttention2,
+    WaveAttention_lh,
+    WaveAttention_2,
+    WaveAttention_lh2,
+)
 from ..model_config import ModelConfig
 
 class WaveVitConfig(ModelConfig):
@@ -116,6 +123,10 @@ class Block(nn.Module):
             self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         elif attn_type == 'wavelh':
             self.attn = WaveAttention_lh(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+        elif attn_type == 'wavelh2':
+            self.attn = WaveAttention_lh2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+        elif attn_type == 'wave12':
+            self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:
         #     self.attn = StdAttention()
 
