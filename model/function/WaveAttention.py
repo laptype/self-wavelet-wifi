@@ -84,7 +84,6 @@ class WaveAttention2(nn.Module):
                  N_dim,
                  num_heads=8,
                  qkv_bias=False,
-                 sr_ratio=4,
                  attn_drop=0.,
                  proj_drop=0.
                  ):
@@ -161,15 +160,14 @@ class WaveAttention_lh(nn.Module):
                  N_dim,
                  num_heads=8,
                  qkv_bias=False,
-                 sr_ratio=4,
                  attn_drop=0.,
                  proj_drop=0.
                  ):
         super().__init__()
-        # assert dim % 2 == 0, "dim should be divisible by 2"
-        assert (dim // 2) % num_heads == 0, 'dim should be divisible by num_heads // 2'
+        assert dim % 2 == 0, "dim should be divisible by 2"
+        assert dim % num_heads == 0, 'dim should be divisible by num_heads // 2'
         self.num_heads = num_heads
-        head_dim = (dim // 2) // num_heads
+        head_dim = dim // num_heads
         self.scale = head_dim ** -0.5
         # --------------------------------------------------------------------------
         self.dwt = DWT_1D(wave='haar')
@@ -188,10 +186,10 @@ class WaveAttention_lh(nn.Module):
         )
         # --------------------------------------------------------------------------
 
-        self.qkv = nn.Linear(dim // 2, dim // 2 * 3, bias=qkv_bias)
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
 
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim + dim // 2, dim)
+        self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
         self.apply(self._init_weights)
 
@@ -213,9 +211,23 @@ class WaveAttention_lh(nn.Module):
 
     def forward(self, x):
                                     # [128, 126, 768]   [B, N, D]
+        B, N, _ = x.shape
         x = self.dwt(x)             # [128, 252, 384]   [B, 2*N, D//2]
+        _, _, C = x.shape
 
+        x = x.reshape(B, 2, N, C).permute(0, 2, 1, 3)
+        # x_hl = x[:,:,[1,0],:].reshape(B, N, 2*C)
+        x = x.reshape(B, N, 2*C)
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, (2*C) // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
 
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(B, N, 2*C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
         return x
 
 class StdAttention(nn.Module):

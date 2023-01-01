@@ -9,7 +9,7 @@ from timm.models.vision_transformer import _cfg, LayerScale, Attention
 import math
 import numpy as np
 
-from ..function import WaveAttention, StdAttention, WaveAttention2
+from ..function import WaveAttention, StdAttention, WaveAttention2, WaveAttention_lh
 from ..model_config import ModelConfig
 
 class WaveVitConfig(ModelConfig):
@@ -62,7 +62,7 @@ class WaveVitConfig(ModelConfig):
         elif scale == 'test':
             # Base
             self.d_model = 768
-            self.num_layer = 8
+            self.num_layer = 1
             self.n_head = 8
 
 class SimpleSpanCLSHead(nn.Module):
@@ -114,6 +114,8 @@ class Block(nn.Module):
             self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wave2':
             self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+        elif attn_type == 'wavelh':
+            self.attn = WaveAttention_lh(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:
         #     self.attn = StdAttention()
 
