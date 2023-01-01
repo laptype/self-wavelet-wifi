@@ -68,15 +68,15 @@ if __name__ == '__main__':
             # )
             os.chdir("D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi")
             os.system('conda activate test')
-            os.system(
-                f'python main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \
-                --backbone_name "{backbone_name}" --head_name "{head_name}" --strategy_name "{strategy_name}" \
-                --train_batch_size {train_batch_size} --eval_batch_size {eval_batch_size} --num_epoch {num_epoch} \
-                --opt_method {opt_method} --lr_rate {lr_rate} --weight_decay {weight_decay} \
-                --lr_rate_adjust_epoch {lr_rate_adjust_epoch} --lr_rate_adjust_factor {lr_rate_adjust_factor}  \
-                --save_epoch {save_epoch} --eval_epoch {eval_epoch} --patience {patience} --is_train true \
-                > {dataset_name}-{strategy_name}-TRAIN.log'
-            )
+            # os.system(
+            #     f'python main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \
+            #     --backbone_name "{backbone_name}" --head_name "{head_name}" --strategy_name "{strategy_name}" \
+            #     --train_batch_size {train_batch_size} --eval_batch_size {eval_batch_size} --num_epoch {num_epoch} \
+            #     --opt_method {opt_method} --lr_rate {lr_rate} --weight_decay {weight_decay} \
+            #     --lr_rate_adjust_epoch {lr_rate_adjust_epoch} --lr_rate_adjust_factor {lr_rate_adjust_factor}  \
+            #     --save_epoch {save_epoch} --eval_epoch {eval_epoch} --patience {patience} --is_train true \
+            #     > {dataset_name}-{strategy_name}-TRAIN.log'
+            # )
             os.system(f'PYTHON main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \
                         --backbone_name "{backbone_name}" --head_name "{head_name}" --strategy_name "{strategy_name}" \
                         --test_batch_size {test_batch_size} \

@@ -11,8 +11,9 @@ if __name__ == '__main__':
 
     model_list = [
 
-        ('wavevit_wave2_s_16', 'vit_span_cls_raw', 128),
-
+        ('wavevit_wave2_0_s_16', 'vit_span_cls_raw', 128),
+        ('wavevit_wave2_4_s_16', 'vit_span_cls_raw', 128),
+        ('wavevit_wave2_8_s_16', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiAR_0.8')
     print(config.dataset_list)
@@ -55,7 +56,7 @@ if __name__ == '__main__':
                 --save_epoch {save_epoch} --eval_epoch {eval_epoch} --patience {patience} --is_train true \
                 > {dataset_name}-{backbone_name}-{strategy_name}-TRAIN.log'
             )
-            os.system(f'PYTHON main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \
-                        --backbone_name "{backbone_name}" --head_name "{head_name}" --strategy_name "{strategy_name}" \
-                        --test_batch_size {test_batch_size} \
-                        > {dataset_name}-{backbone_name}-{strategy_name}-TEST.log')
+            # os.system(f'PYTHON main.py --dataset_name "{dataset_name}" --gpu_device {cuda} \
+            #             --backbone_name "{backbone_name}" --head_name "{head_name}" --strategy_name "{strategy_name}" \
+            #             --test_batch_size {test_batch_size} \
+            #             > {dataset_name}-{backbone_name}-{strategy_name}-TEST.log')
