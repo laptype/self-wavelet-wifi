@@ -159,7 +159,8 @@ class WaveVit(nn.Module):
         self.embed_dim = embed_dim
         self.n_channel = n_channel
         self.seq_len = seq_len
-        self.N_dim = seq_len // patch_size
+
+        self.N_dim = (seq_len // patch_size) if (seq_len % patch_size == 0) else (seq_len // patch_size + 1)
         self.num_classes = num_classes
         self.patch_size = patch_size
         self.depth = depth

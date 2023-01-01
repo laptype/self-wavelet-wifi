@@ -11,9 +11,11 @@ if __name__ == '__main__':
 
     model_list = [
 
-        ('wavevit_wave2_0_s_16', 'vit_span_cls_raw', 128),
-        ('wavevit_wave2_4_s_16', 'vit_span_cls_raw', 128),
-        ('wavevit_wave2_8_s_16', 'vit_span_cls_raw', 128),
+        # ('wavevit_wave2_0_b_32', 'vit_span_cls_raw', 128),
+        ('wavevit_wave2_10_b_32', 'vit_span_cls_raw', 128),
+        ('wavevit_wave2_12_b_32', 'vit_span_cls_raw', 128),
+
+        # ('wavevit_timm_0_s_32', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiAR_0.8')
     print(config.dataset_list)

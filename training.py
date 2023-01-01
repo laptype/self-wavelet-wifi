@@ -45,6 +45,7 @@ def train(config: TrainConfig):
     trainer.training()
 
     # ----------------------------- TEST---------------------------
+    print('TEST'.center(100, '='))
     tester = Tester(
         strategy=strategy,
         eval_data_loader=DataLoader(eval_dataset, batch_size=config.train_batch_size, shuffle=False),
