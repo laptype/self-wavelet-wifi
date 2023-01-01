@@ -174,16 +174,16 @@ class WaveAttention_lh(nn.Module):
         self.idwt = IDWT_1D(wave='haar')
 
         # print(f'N_dim {N_dim}')
-        self.filter = nn.Sequential(
-            nn.Conv1d((N_dim+1)*2, (N_dim+1)*2, kernel_size=3, padding=1, stride=1, groups=1),
-            nn.BatchNorm1d((N_dim+1)*2),
-            nn.ReLU(inplace=True)
-        )
-        self.reduce = nn.Sequential(
-            nn.Conv1d((N_dim+1)*2, (N_dim+1), kernel_size=1, padding=0, stride=1),
-            nn.BatchNorm1d((N_dim+1)),
-            nn.ReLU(inplace=True)
-        )
+        # self.filter = nn.Sequential(
+        #     nn.Conv1d((N_dim+1)*2, (N_dim+1)*2, kernel_size=3, padding=1, stride=1, groups=1),
+        #     nn.BatchNorm1d((N_dim+1)*2),
+        #     nn.ReLU(inplace=True)
+        # )
+        # self.reduce = nn.Sequential(
+        #     nn.Conv1d((N_dim+1)*2, (N_dim+1), kernel_size=1, padding=0, stride=1),
+        #     nn.BatchNorm1d((N_dim+1)),
+        #     nn.ReLU(inplace=True)
+        # )
         # --------------------------------------------------------------------------
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
