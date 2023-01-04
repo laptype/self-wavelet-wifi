@@ -1,22 +1,21 @@
 import os
 import logging
-import torch
-import numpy as np
 import pandas as pd
 from torch.utils.data.dataset import Dataset
 
 from data_process.dataset_config import DatasetConfig
-from .util import load_mat
+
+from util import log_f_ch, load_mat
 
 logger = logging.getLogger( )
 
 
-class WiFiARDatasetConfig(DatasetConfig):
+class WiFiVioDatasetConfig(DatasetConfig):
     def __init__(self, datasource_path: os.path):
-        super(WiFiARDatasetConfig, self).__init__('wifiVio', datasource_path)
+        super(WiFiVioDatasetConfig, self).__init__('wifiVio', datasource_path)
 
 
-def load_wifi_ar_data(config: WiFiARDatasetConfig):
+def load_wifi_Vio_data(config: WiFiVioDatasetConfig):
 
     train_data = {"data_path": os.path.join(config.datasource_path, 'train'),
                   "list_path": os.path.join(config.datasource_path, 'train_list.csv')}
@@ -25,11 +24,11 @@ def load_wifi_ar_data(config: WiFiARDatasetConfig):
 
     return train_data, test_data
 
-class WiFiARDataset(Dataset):
+class WiFiVioDataset(Dataset):
     def __init__(self, data):
-        super(WiFiARDataset, self).__init__()
+        super(WiFiVioDataset, self).__init__()
 
-        logger.info('加载WiFiAR数据集')
+        logger.info('加载WiFiVio数据集')
         self.data_path = data['data_path']
         self.data_list = pd.read_csv(data['list_path'])
         self.tmp_data = self.data_list.iloc[0]['file']
@@ -40,6 +39,11 @@ class WiFiARDataset(Dataset):
 
         self.label_n_class = 7
         self.freq_n_channel, self.freq_seq_len = None, None
+
+        logger.info(log_f_ch('num_sample: ', str(self.num_sample)))
+        logger.info(log_f_ch('n_class: ', str(self.label_n_class)))
+        logger.info(log_f_ch('seq_len: ', str(self.seq_len)))
+        logger.info(log_f_ch('n_channel: ', str(self.n_channel)))
 
     def __getitem__(self, index):
         data = load_mat(os.path.join(self.data_path,
@@ -73,10 +77,12 @@ class WiFiARDataset(Dataset):
 
 
 if __name__ == '__main__':
-    datasource_path = os.path.join("/home/wuxilei/data/wifi_har_empirical_study/wifi_ar")
-    train_data, test_data = load_wifi_ar_data(WiFiARDatasetConfig(datasource_path, 0, 2, 0.75))
-    train_dataset = WiFiARDataset(train_data)
-    test_dataset = WiFiARDataset(test_data)
+    datasource_path = os.path.join("D:\study\dataset\wifi-partition-data-abs\dataset")
+    # datasource_path = os.path.join("D:\study\dataset\wifi-partition-data-abs\dataset")
+
+    train_data, test_data = load_wifi_Vio_data(WiFiVioDatasetConfig(datasource_path))
+    train_dataset = WiFiVioDataset(train_data)
+    test_dataset = WiFiVioDataset(test_data)
     print(len(train_dataset))
     print(len(test_dataset))
     print(train_dataset.get_n_classes(), test_dataset.get_n_classes())

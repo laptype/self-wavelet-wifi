@@ -15,10 +15,10 @@ if __name__ == '__main__':
         # ('wavevit_wave2_10_b_32', 'vit_span_cls_raw', 128),
         # ('wavevit_wave2_12_b_32', 'vit_span_cls_raw', 128),
 
-        ('wavevit_wavelh_0_s_32', 'vit_span_cls_raw', 128),
-        ('wavevit_wavelh_4_b_32', 'vit_span_cls_raw', 128),
-        ('wavevit_wavelh_8_b_32', 'vit_span_cls_raw', 128),
-        ('wavevit_wavelh_12_b_32', 'vit_span_cls_raw', 128),
+        ('wavevit_wavelh2_0_s_16', 'vit_span_cls_raw', 128),
+        ('wavevit_wavelh2_4_s_16', 'vit_span_cls_raw', 128),
+        ('wavevit_wavelh2_8_s_16', 'vit_span_cls_raw', 128),
+        # ('wavevit_wavelh2_12_b_32', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiAR_0.8')
     print(config.dataset_list)
