@@ -156,6 +156,10 @@ class WaveAttention2_2(nn.Module):
         return x
 
 class WaveAttention_lh2(nn.Module):
+    '''
+    加入了卷积 DWT - CONV - IDWT
+    先卷积，最后结果拼接 IDWT
+    '''
     def __init__(self,
                  dim,
                  N_dim,
@@ -255,5 +259,5 @@ if __name__ == '__main__':
     print(inputs.shape)
     inputs = _pickup_patching(inputs)
     print(inputs.shape)
-    wave_attn = WaveAttention2(dim=480).to(torch.device('cuda'))
-    wave_attn(inputs)
+    # wave_attn = WaveAttention2(dim=480).to(torch.device('cuda'))
+    # wave_attn(inputs)
