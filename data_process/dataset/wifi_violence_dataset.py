@@ -53,7 +53,7 @@ class WiFiVioDataset(Dataset):
         return {
             'data': torch.from_numpy(data['amp']).float(),
             # 'freq_data': self.freq_data[index],
-            'label': torch.from_numpy(data['label']).long(),
+            'label': torch.from_numpy(data['label']).long()-1,
         }
 
     def __len__(self):

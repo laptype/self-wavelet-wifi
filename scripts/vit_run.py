@@ -13,9 +13,9 @@ if __name__ == '__main__':
         # ('vit_b_2', 'vit_span_cls_freq', 128),
         # ('vit_b_4', 'vit_span_cls_freq', 128),
         # ('vit_b_8', 'vit_span_cls_freq', 128),
-        ('vit_b_16', 'vit_span_cls_raw', 128),
-        ('vit_b_32', 'vit_span_cls_raw', 128),
-        ('vit_b_64', 'vit_span_cls_raw', 128),
+        ('vit_b_16', 'vit_span_cls_raw', 64),
+        ('vit_b_32', 'vit_span_cls_raw', 64),
+        ('vit_b_64', 'vit_span_cls_raw', 64),
         #
         # ('vit_s_2', 'vit_span_cls_freq', 128),
         # ('vit_s_4', 'vit_span_cls_freq', 128),
