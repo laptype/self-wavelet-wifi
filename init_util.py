@@ -5,6 +5,7 @@ import math
 
 from data_process import (
     WiFiARDatasetConfig,
+    WiFiVioDatasetConfig,
 )
 
 from model import ModelConfig
@@ -52,6 +53,15 @@ def init_dataset(dataset_name: str, datasource_path: os.path):
         from data_process import load_WiAR_dataset, WiFiARDataset
         train_dataset, test_dataset = load_WiAR_dataset(dataset_config)
         train_dataset, test_dataset = WiFiARDataset(train_dataset), WiFiARDataset(test_dataset)
+        return train_dataset, test_dataset
+    if dataset_name.startswith('WiVio'):
+        '''
+        WiVio
+        '''
+        dataset_config = WiFiVioDatasetConfig(os.path.join(datasource_path))
+        from data_process import load_wifi_Vio_data, WiFiVioDataset
+        train_dataset, test_dataset = load_wifi_Vio_data(dataset_config)
+        train_dataset, test_dataset = WiFiVioDataset(train_dataset), WiFiVioDataset(test_dataset)
         return train_dataset, test_dataset
 
 
