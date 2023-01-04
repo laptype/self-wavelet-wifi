@@ -87,6 +87,8 @@ def init_configs() -> BasicConfig:
         configs.datasource_path = os.path.join(args.datasource_path, 'WiAR')
     elif configs.dataset_name.startswith('hthi'):
         configs.datasource_path = os.path.join(args.datasource_path, 'hthi')
+    elif configs.dataset_name.startswith('WiVio'):
+        configs.datasource_path = os.path.join(args.datasource_path)
     configs.check_point_path = os.path.join(
         args.check_point_path, '%s' % configs.dataset_name, '%s' % configs.strategy_name
     )

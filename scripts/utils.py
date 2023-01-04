@@ -29,6 +29,8 @@ def dataset_name_to_head_name_mapping(dataset_name: str):
         return 'wifi_ar_span_cls'
     elif dataset_name.startswith('hthi'):
         return 'hthi_span_cls'
+    elif dataset_name.startswith('WiVio'):
+        return 'wifi_ar_span_cls'
 
 
 def break_down_dataset_name(whole_dataset_name: str):

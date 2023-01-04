@@ -1,6 +1,7 @@
 import os
 import logging
 import pandas as pd
+import torch
 from torch.utils.data.dataset import Dataset
 
 from data_process.dataset_config import DatasetConfig
@@ -50,9 +51,9 @@ class WiFiVioDataset(Dataset):
                                      f'{self.data_list.iloc[index]["file"]}.h5'))
 
         return {
-            'data': data['amp'],
+            'data': torch.from_numpy(data['amp']).float(),
             # 'freq_data': self.freq_data[index],
-            'label': data['label'],
+            'label': torch.from_numpy(data['label']).long(),
         }
 
     def __len__(self):
