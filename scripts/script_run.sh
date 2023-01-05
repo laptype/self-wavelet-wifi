@@ -2,7 +2,8 @@
 
 # ./script_run [cuda] [dataset_name] [backbone_name] [head_name] [strategy_name] [batch_size]
 
-python="/home/wuxilei/anaconda3/envs/torch/bin/python3.8"
+python="/home/lanbo/anaconda3/envs/test/bin/python3"
+
 cuda=$1
 dataset_name=$2
 
@@ -12,7 +13,7 @@ strategy_name=$5
 
 train_batch_size=$6
 eval_batch_size=1
-num_epoch=500
+num_epoch=400
 
 opt_method="adamw"
 lr_rate=2e-4
@@ -25,17 +26,17 @@ patience=50
 
 test_batch_size=$6
 
-echo "========================${dataset_name}-${strategy_name}-TRAIN========================"
+echo "========================${dataset_name}-${backbone_name}-${strategy_name}-TRAIN========================"
 CUDA_VISIBLE_DEVICES=${cuda} ${python} ../main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
 --backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
 --train_batch_size ${train_batch_size} --eval_batch_size ${eval_batch_size} --num_epoch ${num_epoch} \
 --opt_method ${opt_method} --lr_rate ${lr_rate} --weight_decay ${weight_decay} \
 --lr_rate_adjust_epoch ${lr_rate_adjust_epoch} --lr_rate_adjust_factor ${lr_rate_adjust_factor}  \
---save_epoch ${save_epoch} --eval_epoch ${eval_epoch} --patience ${patience} --is_train true \
-> ./log/${dataset_name}-${strategy_name}-TRAIN.log
+--save_epoch ${save_epoch} --eval_epoch ${eval_epoch} --patience ${patience} --is_train true --datasource_path "/home/lanbo/dataset/wifi_violence_processed/"\
+> ../log/${dataset_name}-${backbone_name}-${strategy_name}-TRAIN.log
 
-echo "========================${dataset_name}-${strategy_name}-TEST========================"
-CUDA_VISIBLE_DEVICES=${cuda} ${python} ../main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
---backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
---test_batch_size ${test_batch_size} \
-> ./log/${dataset_name}-${strategy_name}-TEST.log
+#echo "========================${dataset_name}-${strategy_name}-TEST========================"
+#CUDA_VISIBLE_DEVICES=${cuda} ${python} ../main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
+#--backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
+#--test_batch_size ${test_batch_size} \
+#> ./log/${dataset_name}-${strategy_name}-TEST.log

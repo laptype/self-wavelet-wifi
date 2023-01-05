@@ -22,7 +22,6 @@ def load_wifi_Vio_data(config: WiFiVioDatasetConfig):
                   "list_path": os.path.join(config.datasource_path, 'train_list.csv')}
     test_data = {"data_path": os.path.join(config.datasource_path, 'test'),
                   "list_path": os.path.join(config.datasource_path, 'test_list.csv')}
-
     return train_data, test_data
 
 class WiFiVioDataset(Dataset):

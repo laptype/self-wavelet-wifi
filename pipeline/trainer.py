@@ -124,6 +124,10 @@ class Trainer(object):
             if self.patience != 0:
                 if train_loss < mini_train_loss:
                     mini_train_loss = train_loss
+                    torch.save(self.strategy.state_dict(),
+                               os.path.join(self.check_point_path,
+                                            '%s-%s-best' % (self.strategy.backbone.get_model_name(),
+                                                          self.strategy.head.get_model_name())))
                     patience_count = 0
                 else:
                     patience_count += 1
