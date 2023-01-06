@@ -30,16 +30,17 @@ log_path=$7
 
 datasource_path=$8
 
-#echo "========================${dataset_name}-${backbone_name}-${strategy_name}-TRAIN========================"
-#CUDA_VISIBLE_DEVICES=${cuda} ${python} /home/lanbo/wifi_wavelet/main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
-#--backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
-#--train_batch_size ${train_batch_size} --eval_batch_size ${eval_batch_size} --num_epoch ${num_epoch} \
-#--opt_method ${opt_method} --lr_rate ${lr_rate} --weight_decay ${weight_decay} \
-#--lr_rate_adjust_epoch ${lr_rate_adjust_epoch} --lr_rate_adjust_factor ${lr_rate_adjust_factor}  \
-#--save_epoch ${save_epoch} --eval_epoch ${eval_epoch} --patience ${patience} --is_train true \
-#--datasource_path "/home/lanbo/dataset/wifi_violence_processed/"\
-#--tab "tab1"\
-#> ${log_path}/${dataset_name}-${backbone_name}-${strategy_name}-TRAIN.log
+tab=$9
+
+echo "========================${dataset_name}-${backbone_name}-${strategy_name}-TRAIN========================"
+CUDA_VISIBLE_DEVICES=${cuda} ${python} /home/lanbo/wifi_wavelet/main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
+--backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
+--train_batch_size ${train_batch_size} --eval_batch_size ${eval_batch_size} --num_epoch ${num_epoch} \
+--opt_method ${opt_method} --lr_rate ${lr_rate} --weight_decay ${weight_decay} \
+--lr_rate_adjust_epoch ${lr_rate_adjust_epoch} --lr_rate_adjust_factor ${lr_rate_adjust_factor}  \
+--save_epoch ${save_epoch} --eval_epoch ${eval_epoch} --patience ${patience} --is_train true \
+--datasource_path "${datasource_path}" --tab "${tab}"\
+> ${log_path}/${dataset_name}-${backbone_name}-${strategy_name}-TRAIN.log
 
 echo "========================${dataset_name}-${strategy_name}-TEST========================"
 CUDA_VISIBLE_DEVICES=${cuda} ${python} ../main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \

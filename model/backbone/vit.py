@@ -22,9 +22,10 @@ class ViTConfig(ModelConfig):
 
     def __init__(self, model_name: str):
         super(ViTConfig, self).__init__(model_name)
-        # vit_s_16
-        _, scale, patch_size = model_name.split('_')
+        # vit_s_16_0.5
+        _, scale, patch_size, dropout = model_name.split('_')
         self.patch_size = int(patch_size)
+        self.dropout = float(dropout)
         if scale == 'es':
             # Extra Small
             self.d_model = 128
@@ -48,7 +49,7 @@ class ViTConfig(ModelConfig):
 
 
 class TransformerEncoder(nn.Module):
-    def __init__(self, d_model, n_head=12, d_ff=2048, dropout=0.1):
+    def __init__(self, d_model, n_head=12, d_ff=2048, dropout=0.5):
         super(TransformerEncoder, self).__init__()
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)

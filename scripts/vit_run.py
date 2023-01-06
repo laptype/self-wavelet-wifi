@@ -33,11 +33,11 @@ if __name__ == '__main__':
         # ('vit_s_32', 'vit_span_cls_raw', 64),
 
 
-        # ('vit_b_16', 'vit_span_cls_raw', 128),
+        ('vit_b_16_0.5', 'vit_span_cls_raw', 128),
         # ('vit_b_32', 'vit_span_cls_raw', 128),
         # ('vit_b_64', 'vit_span_cls_raw', 128),
 
-        ('vit_s_64', 'vit_span_cls_raw', 64),
+        # ('vit_s_64', 'vit_span_cls_raw', 64),
         #
         # ('vit_ms_2', 'vit_span_cls_freq', 128),
         # ('vit_ms_4', 'vit_span_cls_freq', 128),
@@ -60,13 +60,13 @@ if __name__ == '__main__':
             """
                 修改log输出地址，datasource_path 在 sh 里面改
             """
-            log_name = 'log_no_nor'
+            log_name = 'log'
+            tab = ''
+            datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
 
             log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
             if not os.path.exists(log_path):
                 os.makedirs(log_path)
-
-            datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
 
             backbone_name = module[0]
             head_name = dataset_name_to_head_name_mapping(dataset_name)
@@ -112,6 +112,6 @@ if __name__ == '__main__':
 
 
             os.system(
-                'bash /home/lanbo/wifi_wavelet/scripts/script_run.sh %d %s %s %s %s %d %s %s' %
-                (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size, log_path, datasource_path)
+                'bash /home/lanbo/wifi_wavelet/scripts/script_run.sh %d %s %s %s %s %d %s %s %s' %
+                (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size, log_path, datasource_path, tab)
             )
