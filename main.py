@@ -33,7 +33,7 @@ def init_configs() -> BasicConfig:
     parser.add_argument('--datasource_path', dest="datasource_path", required=False, type=str,
                         help="数据集源路径", default='D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset')
     parser.add_argument('--check_point_path', dest="check_point_path", required=False, type=str,
-                        help="模型以及预测结果保存路径", default='result/checkpoint')
+                        help="模型以及预测结果保存路径", default='/home/lanbo/wifi_wavelet/result/checkpoint/')
 
     parser.add_argument('--gpu_device', dest="gpu_device", required=True, type=str,
                         help="选择GPU设备编号，不适用GPU则-1")

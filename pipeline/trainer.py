@@ -46,7 +46,7 @@ class Trainer(object):
 
         self.use_gpu = use_gpu
 
-        self.writer = SummaryWriter(self.check_point_path)
+        self.writer = SummaryWriter(os.path.join(self.check_point_path, f'{self.strategy.backbone.get_model_name()}'))
 
     def _init_optimizer(self):
         params = [
@@ -100,11 +100,16 @@ class Trainer(object):
             self.strategy.train()
             log_info = 'Epoch: %d. ' % (epoch + 1)
             train_loss = 0
-            for data in tqdm(self.train_data_loader):
+            tbar = tqdm(self.train_data_loader)
+            for data in tbar:
+                tbar.set_description('Epoch: %d: ' % (epoch + 1))
                 data = self._to_var(data)
                 train_loss += self._train_one_step(data)
+                tbar.set_postfix(train_loss=train_loss)
+            tbar.close()
             self.scheduler.step()
             log_info += 'Train Loss: %f. ' % train_loss
+
             self.writer.add_scalar("Train Loss", train_loss, epoch)
             if (epoch + 1) % self.eval_epoch == 0:
                 self.strategy.eval()
@@ -125,10 +130,10 @@ class Trainer(object):
                 if train_loss < mini_train_loss:
                     mini_train_loss = train_loss
                     torch.save(self.strategy.state_dict(),
-                               os.path.join(self.check_point_path,
-                                            '%s-%s-best' % (self.strategy.backbone.get_model_name(),
-                                                          self.strategy.head.get_model_name())))
+                               os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.backbone.get_model_name(),
+                                                                                   self.strategy.head.get_model_name())))
                     patience_count = 0
+                    log_info += 'best-save '
                 else:
                     patience_count += 1
                 log_info += 'Patience Count: %d.' % patience_count

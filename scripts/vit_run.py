@@ -1,4 +1,9 @@
+#!/usr/bin/env python3
+
 import os
+
+import sys
+sys.path.append('/home/lanbo/wifi_wavelet')
 
 from scripts.utils import *
 
@@ -6,6 +11,8 @@ from scripts.utils import *
 if __name__ == '__main__':
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     cuda = 0
+
+    # os.system('tmux a -t wifi_vio')
 
     config = DatasetDefaultConfig()
 
@@ -22,13 +29,15 @@ if __name__ == '__main__':
         # ('vit_s_4', 'vit_span_cls_freq', 128),
         # ('vit_s_8', 'vit_span_cls_freq', 128),
 
-        ('vit_s_16', 'vit_span_cls_raw', 128),
-        ('vit_s_32', 'vit_span_cls_raw', 128),
-        ('vit_s_64', 'vit_span_cls_raw', 128),
+        # ('vit_s_16', 'vit_span_cls_raw', 64),
+        # ('vit_s_32', 'vit_span_cls_raw', 64),
+
 
         ('vit_b_16', 'vit_span_cls_raw', 128),
-        ('vit_b_32', 'vit_span_cls_raw', 128),
-        ('vit_b_64', 'vit_span_cls_raw', 128),
+        # ('vit_b_32', 'vit_span_cls_raw', 128),
+        # ('vit_b_64', 'vit_span_cls_raw', 128),
+
+        # ('vit_s_64', 'vit_span_cls_raw', 64),
         #
         # ('vit_ms_2', 'vit_span_cls_freq', 128),
         # ('vit_ms_4', 'vit_span_cls_freq', 128),
@@ -48,22 +57,31 @@ if __name__ == '__main__':
     print(config.dataset_list)
     for dataset_name in config.dataset_list:
         for module in model_list:
-            datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
+            """
+                修改log输出地址，datasource_path 在 sh 里面改
+            """
+            log_name = 'log_no_nor'
+
+            log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
+            if not os.path.exists(log_path):
+                os.makedirs(log_path)
+
+            # datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
             backbone_name = module[0]
             head_name = dataset_name_to_head_name_mapping(dataset_name)
             strategy_name = module[1]
             batch_size = module[2]
 
             eval_batch_size = 1
-            num_epoch = 400
+            num_epoch = 500
 
             opt_method = "adamw"
             lr_rate = 2e-4
             weight_decay = 1e-4
             lr_rate_adjust_epoch = 100
             lr_rate_adjust_factor = 0.2
-            save_epoch = 401
-            eval_epoch = 401
+            save_epoch = 501
+            eval_epoch = 501
             patience = 50
 
             test_batch_size = batch_size
@@ -90,7 +108,9 @@ if __name__ == '__main__':
             #             --test_batch_size {test_batch_size} \
             #             > {dataset_name}-{strategy_name}-TEST.log')
 
+
+
             os.system(
-                'bash ./script_run.sh %d %s %s %s %s %d' %
-                (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size)
+                'bash /home/lanbo/wifi_wavelet/scripts/script_run.sh %d %s %s %s %s %d %s' %
+                (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size, log_path)
             )

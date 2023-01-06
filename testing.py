@@ -23,13 +23,28 @@ def test(config: TestConfig):
                                        config.strategy_name,
                                        train_dataset.get_n_channels(),
                                        train_dataset.get_seq_lens())
+
     strategy.load_state_dict(torch.load(os.path.join(config.check_point_path, "%s-%s-final" % (
         config.backbone_name, config.head_name,
     ))))
 
+    print('Test dataset'.center(100, '='))
+
     tester = Tester(
         strategy=strategy,
         eval_data_loader=DataLoader(eval_dataset, batch_size=config.test_batch_size, shuffle=False),
+        n_classes=eval_dataset.get_n_classes(),
+        output_path=config.output_path,
+        use_gpu=False if config.gpu_device is None else True,
+    )
+
+    tester.testing()
+
+    print('Train dataset'.center(100, '='))
+
+    tester = Tester(
+        strategy=strategy,
+        eval_data_loader=DataLoader(train_dataset, batch_size=config.test_batch_size, shuffle=False),
         n_classes=eval_dataset.get_n_classes(),
         output_path=config.output_path,
         use_gpu=False if config.gpu_device is None else True,
