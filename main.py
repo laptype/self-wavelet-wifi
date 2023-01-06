@@ -34,6 +34,8 @@ def init_configs() -> BasicConfig:
                         help="数据集源路径", default='D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset')
     parser.add_argument('--check_point_path', dest="check_point_path", required=False, type=str,
                         help="模型以及预测结果保存路径", default='/home/lanbo/wifi_wavelet/result/checkpoint/')
+    parser.add_argument('--tab', dest='tab', required=False, type=str,
+                        help="输出checkpoint的标记，避免覆盖", default='')
 
     parser.add_argument('--gpu_device', dest="gpu_device", required=True, type=str,
                         help="选择GPU设备编号，不适用GPU则-1")
@@ -89,9 +91,14 @@ def init_configs() -> BasicConfig:
         configs.datasource_path = os.path.join(args.datasource_path, 'hthi')
     elif configs.dataset_name.startswith('WiVio'):
         configs.datasource_path = os.path.join(args.datasource_path)
+
     configs.check_point_path = os.path.join(
         args.check_point_path, '%s' % configs.dataset_name, '%s' % configs.strategy_name
     )
+
+    if args.tab != '':
+        configs.check_point_path = os.path.join(configs.check_point_path, args.tab)
+        
     if not os.path.exists(configs.check_point_path):
         os.makedirs(configs.check_point_path)
     configs.gpu_device = args.gpu_device

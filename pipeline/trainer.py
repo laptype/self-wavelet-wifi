@@ -46,7 +46,7 @@ class Trainer(object):
 
         self.use_gpu = use_gpu
 
-        self.writer = SummaryWriter(os.path.join(self.check_point_path, f'{self.strategy.backbone.get_model_name()}'))
+        self.writer = SummaryWriter(os.path.join(self.check_point_path, f'tb_{self.strategy.backbone.get_model_name()}'))
 
     def _init_optimizer(self):
         params = [
