@@ -94,7 +94,7 @@ class Trainer(object):
         loss = self.strategy(data)
 
         loss.backward()
-        loss = reduce_value(loss, average=True)
+        # loss = reduce_value(loss, average=True)
 
         self.optimizer.step()
 
@@ -156,20 +156,30 @@ class Trainer(object):
             train_sampler.set_epoch(epoch)
 
             self.strategy.train()
-            log_info = 'Epoch: %d. ' % (epoch + 1)
+            if self.rank == 0:
+                log_info = 'Epoch: %d. ' % (epoch + 1)
+                tbar = tqdm(train_loader)
+            else:
+                tbar = train_loader
+
             train_loss = 0
-            tbar = tqdm(train_loader)
+
             for data in tbar:
-                tbar.set_description('Epoch: %d: ' % (epoch + 1))
                 data = self._to_var(data, device)
                 train_loss += self._train_one_step(data)
-                tbar.set_postfix(train_loss=train_loss)
 
-            tbar.close()
+                if self.rank ==0:
+                    tbar.set_description('Epoch: %d: ' % (epoch + 1))
+                    tbar.set_postfix(train_loss=train_loss)
+
+            if self.rank==0:
+                tbar.close()
             self.scheduler.step()
-            log_info += 'Train Loss: %f. ' % train_loss
 
-            self.writer.add_scalar("Train Loss", train_loss, epoch)
+            if self.rank == 0:
+                log_info += 'Train Loss: %f. ' % train_loss
+                self.writer.add_scalar("Train Loss", train_loss, epoch)
+
             if (epoch + 1) % self.eval_epoch == 0:
                 self.strategy.eval()
                 with torch.no_grad():
@@ -177,33 +187,38 @@ class Trainer(object):
                     for data in tqdm(val_loader):
                         data = self._to_var(data, device)
                         eval_loss += self.strategy(data)
-                log_info += 'Eval Loss: %f.' % eval_loss
-                self.writer.add_scalar("Eval Loss", eval_loss, epoch)
+                if self.rank == 0:
+                    log_info += 'Eval Loss: %f.' % eval_loss
+                    self.writer.add_scalar("Eval Loss", eval_loss, epoch)
             if (epoch + 1) % self.save_epoch == 0:
-                torch.save(self.strategy.module.state_dict(),
-                           os.path.join(self.check_point_path, '%s-%s-%d' % (self.strategy.module.backbone.get_model_name(),
-                                                                             self.strategy.module.head.get_model_name(),
-                                                                             epoch + 1)))
-            # 如果启用patience机制
-            if self.patience != 0:
-                if train_loss < mini_train_loss:
-                    mini_train_loss = train_loss
+                if self.rank == 0:
                     torch.save(self.strategy.module.state_dict(),
-                               os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
-                                                                                   self.strategy.module.head.get_model_name())))
-                    patience_count = 0
-                    log_info += 'best-save '
-                else:
-                    patience_count += 1
-                log_info += 'Patience Count: %d.' % patience_count
-                if patience_count > self.patience:
-                    log_info += 'Stop Early, patience has been running out.'
-                    print(log_info)
-                    break
-            print(log_info)
-        torch.save(self.strategy.module.state_dict(),
-                   os.path.join(self.check_point_path, '%s-%s-final' % (self.strategy.module.backbone.get_model_name(),
-                                                                        self.strategy.module.head.get_model_name())))
+                               os.path.join(self.check_point_path, '%s-%s-%d' % (self.strategy.module.backbone.get_model_name(),
+                                                                                 self.strategy.module.head.get_model_name(),
+                                                                                 epoch + 1)))
+            # 如果启用patience机制
+            if self.rank == 0:
+                if self.patience != 0:
+                    if train_loss < mini_train_loss:
+                        mini_train_loss = train_loss
+                        torch.save(self.strategy.module.state_dict(),
+                                   os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
+                                                                                       self.strategy.module.head.get_model_name())))
+                        patience_count = 0
+                        log_info += 'best-save '
+                    else:
+                        patience_count += 1
+                    log_info += 'Patience Count: %d.' % patience_count
+                    if patience_count > self.patience:
+                        log_info += 'Stop Early, patience has been running out.'
+                        print(log_info)
+                        break
+                print(log_info)
+
+        if self.rank == 0:
+            torch.save(self.strategy.module.state_dict(),
+                       os.path.join(self.check_point_path, '%s-%s-final' % (self.strategy.module.backbone.get_model_name(),
+                                                                            self.strategy.module.head.get_model_name())))
 
         if self.rank == 0:
             if os.path.exists(os.path.join(self.check_point_path, "initial_weights.pt")) is True:
