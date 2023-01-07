@@ -43,7 +43,7 @@ CUDA_VISIBLE_DEVICES=${cuda} ${python} /home/lanbo/wifi_wavelet/main.py --datase
 > ${log_path}/${dataset_name}-${backbone_name}-${strategy_name}-TRAIN.log
 
 echo "========================${dataset_name}-${strategy_name}-TEST========================"
-CUDA_VISIBLE_DEVICES=${cuda} ${python} ../main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
+CUDA_VISIBLE_DEVICES=${cuda} ${python} /home/lanbo/wifi_wavelet/main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
 --backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
 --test_batch_size ${test_batch_size} \
 --datasource_path "${datasource_path}"\

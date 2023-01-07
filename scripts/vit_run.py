@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
 import os
+import torch
 
 import sys
 sys.path.append('/home/lanbo/wifi_wavelet')
+os.environ['MKL_THREADING_LAYER'] = 'GNU'
+os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
 from scripts.utils import *
 
 
 if __name__ == '__main__':
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-    cuda = 0
+    cuda = 3
 
     # os.system('tmux a -t wifi_vio')
 
@@ -29,12 +32,16 @@ if __name__ == '__main__':
         # ('vit_s_4', 'vit_span_cls_freq', 128),
         # ('vit_s_8', 'vit_span_cls_freq', 128),
 
-        # ('vit_s_16', 'vit_span_cls_raw', 64),
+        # ('vit_s_16_0.5', 'vit_span_cls_raw', 64),
         # ('vit_s_32', 'vit_span_cls_raw', 64),
 
 
-        ('vit_b_16_0.5', 'vit_span_cls_raw', 128),
-        # ('vit_b_32', 'vit_span_cls_raw', 128),
+        ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.6', 'vit_span_cls_raw', 64), 
+        ('vit_b_16_0.7', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.8', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.9', 'vit_span_cls_raw', 64),
+        # ('vit_b_32_0.5', 'vit_span_cls_raw', 128),
         # ('vit_b_64', 'vit_span_cls_raw', 128),
 
         # ('vit_s_64', 'vit_span_cls_raw', 64),
@@ -42,15 +49,15 @@ if __name__ == '__main__':
         # ('vit_ms_2', 'vit_span_cls_freq', 128),
         # ('vit_ms_4', 'vit_span_cls_freq', 128),
         # ('vit_ms_8', 'vit_span_cls_freq', 128),
-        # ('vit_ms_16', 'vit_span_cls_raw', 128),
-        # ('vit_ms_32', 'vit_span_cls_raw', 128),
+        ('vit_ms_16_0.6', 'vit_span_cls_raw', 128),
+        ('vit_ms_32_0.6', 'vit_span_cls_raw', 128),
         # ('vit_ms_64', 'vit_span_cls_raw', 128),
         #
         # ('vit_es_2', 'vit_span_cls_freq', 128),
         # ('vit_es_4', 'vit_span_cls_freq', 128),
         # ('vit_es_8', 'vit_span_cls_freq', 128),
-        # ('vit_es_16', 'vit_span_cls_raw', 128),
-        # ('vit_es_32', 'vit_span_cls_raw', 128),
+        ('vit_es_16_0.6', 'vit_span_cls_raw', 128),
+        ('vit_es_32_0.6', 'vit_span_cls_raw', 128),
         # ('vit_es_64', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiVio')
@@ -60,9 +67,9 @@ if __name__ == '__main__':
             """
                 修改log输出地址，datasource_path 在 sh 里面改
             """
-            log_name = 'log'
-            tab = ''
-            datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
+            log_name = 'log_dataset3'
+            tab = 'dataset3'
+            datasource_path = '/home/lanbo/dataset/wifi_violence_processed3/'
 
             log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
             if not os.path.exists(log_path):
