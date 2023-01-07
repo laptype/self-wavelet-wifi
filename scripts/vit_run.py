@@ -39,11 +39,11 @@ if __name__ == '__main__':
         # ('vit_s_32', 'vit_span_cls_raw', 64),
 
 
-        ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.6', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.7', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.8', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.9', 'vit_span_cls_raw', 64),
+        # ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.6', 'vit_span_cls_raw', 128),
+        ('vit_b_16_0.7', 'vit_span_cls_raw', 128),
+        ('vit_b_16_0.8', 'vit_span_cls_raw', 128),
+        ('vit_b_16_0.9', 'vit_span_cls_raw', 128),
 
         # ('vit_b_32_0.5', 'vit_span_cls_raw', 128),
         # ('vit_b_64', 'vit_span_cls_raw', 128),
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             batch_size = module[2]
 
             eval_batch_size = 1
-            num_epoch = 500
+            num_epoch = 2
 
             opt_method = "adamw"
             lr_rate = 2e-4

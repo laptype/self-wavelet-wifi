@@ -13,7 +13,7 @@ strategy_name=$5
 
 train_batch_size=$6
 eval_batch_size=1
-num_epoch=400
+num_epoch=500
 
 opt_method="adamw"
 lr_rate=2e-4
@@ -48,5 +48,5 @@ echo "========================${dataset_name}-${strategy_name}-TEST=============
 CUDA_VISIBLE_DEVICES=${cuda} ${python} /home/lanbo/wifi_wavelet/main.py --dataset_name ${dataset_name} --gpu_device ${cuda} \
 --backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
 --test_batch_size ${test_batch_size} \
---datasource_path "${datasource_path}"\
+--datasource_path "${datasource_path}" --tab "${tab}"\
 > ${log_path}/${dataset_name}-${backbone_name}-${strategy_name}-TEST.log

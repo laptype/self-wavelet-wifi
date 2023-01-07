@@ -198,22 +198,27 @@ class Trainer(object):
                                                                                  self.strategy.module.head.get_model_name(),
                                                                                  epoch + 1)))
             # 如果启用patience机制
-            if self.rank == 0:
-                if self.patience != 0:
-                    if train_loss < mini_train_loss:
-                        mini_train_loss = train_loss
+            if self.patience != 0:
+                if train_loss < mini_train_loss:
+                    mini_train_loss = train_loss
+                    if self.rank == 0:
+                        log_info += 'best-save '
                         torch.save(self.strategy.module.state_dict(),
                                    os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
                                                                                        self.strategy.module.head.get_model_name())))
-                        patience_count = 0
-                        log_info += 'best-save '
-                    else:
-                        patience_count += 1
+                    patience_count = 0
+                else:
+                    patience_count += 1
+
+                if self.rank == 0:
                     log_info += 'Patience Count: %d.' % patience_count
-                    if patience_count > self.patience:
+
+                if patience_count > self.patience:
+                    if self.rank == 0:
                         log_info += 'Stop Early, patience has been running out.'
                         print(log_info)
-                        break
+                    break
+            if self.rank == 0:
                 print(log_info)
 
         if self.rank == 0:
@@ -226,3 +231,4 @@ class Trainer(object):
                 os.remove(os.path.join(self.check_point_path, "initial_weights.pt"))
 
         cleanup()
+        print('dist.destroy_process_group()')
