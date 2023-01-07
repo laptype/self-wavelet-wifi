@@ -69,14 +69,14 @@ def init_configs() -> BasicConfig:
     parser.add_argument('--test_batch_size', dest="test_batch_size", required=False, type=int, default=64,
                         help="测试使用batch_size")
 
-    """分布式训练参数"""
-    parser.add_argument('--is_dist', dest="is_dist", required=False, type=bool, default=False)
-    parser.add_argument('--world_size', dest="world_size", required=False, type=int, default=1,
-                        help='number of distributed processes')
-    parser.add_argument('--local_rank', dest="local_rank",required=False, default=-1, type=int)
-    # parser.add_argument('--dist_on_itp', dest="dist_on_itp", required=False, action='store_true')
-    parser.add_argument('--dist_url', dest="dist_url", required=False, default='env://',
-                        help='url used to set up distributed training')
+    # """分布式训练参数"""
+    # parser.add_argument('--is_dist', dest="is_dist", required=False, type=bool, default=False)
+    # parser.add_argument('--world_size', dest="world_size", required=False, type=int, default=1,
+    #                     help='number of distributed processes')
+    # parser.add_argument('--local_rank', dest="local_rank",required=False, default=-1, type=int)
+    # # parser.add_argument('--dist_on_itp', dest="dist_on_itp", required=False, action='store_true')
+    # parser.add_argument('--dist_url', dest="dist_url", required=False, default='env://',
+    #                     help='url used to set up distributed training')
 
     args = parser.parse_args()
 
@@ -129,10 +129,10 @@ def init_configs() -> BasicConfig:
     configs.test_batch_size = args.test_batch_size
     configs.output_path = configs.check_point_path
 
-    if args.is_dist:
-        configs.world_size = args.world_size
-        configs.local_rank = args.local_rank
-        configs.dist_url = args.dist_url
+    # if args.is_dist:
+    #     configs.world_size = args.world_size
+    #     configs.local_rank = args.local_rank
+    #     configs.dist_url = args.dist_url
 
     return configs
 

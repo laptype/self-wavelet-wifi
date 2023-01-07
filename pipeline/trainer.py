@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torch.utils.tensorboard import SummaryWriter
 
-from util.distributed_utils import init_distributed_mode, dist, cleanup, reduce_value
+from util import init_distributed_mode, dist, cleanup, reduce_value
 
 class Trainer(object):
     def __init__(self,
@@ -54,12 +54,14 @@ class Trainer(object):
 
         self.dist_url = 'env://'
         self.rank = 0
+        self.world_size = 0
+        self.gpu=0
 
         self.device = 'cuda'
     def _init_optimizer(self):
         params = [
-            {'params': self.strategy.backbone.parameters()},
-            {'params': self.strategy.head.parameters()},
+            {'params': self.strategy.module.backbone.parameters()},
+            {'params': self.strategy.module.head.parameters()},
         ]
         if self.opt_method == 'adam':
             self.optimizer = torch.optim.Adam(params=params,
@@ -179,16 +181,16 @@ class Trainer(object):
                 self.writer.add_scalar("Eval Loss", eval_loss, epoch)
             if (epoch + 1) % self.save_epoch == 0:
                 torch.save(self.strategy.module.state_dict(),
-                           os.path.join(self.check_point_path, '%s-%s-%d' % (self.strategy.backbone.get_model_name(),
-                                                                             self.strategy.head.get_model_name(),
+                           os.path.join(self.check_point_path, '%s-%s-%d' % (self.strategy.module.backbone.get_model_name(),
+                                                                             self.strategy.module.head.get_model_name(),
                                                                              epoch + 1)))
             # 如果启用patience机制
             if self.patience != 0:
                 if train_loss < mini_train_loss:
                     mini_train_loss = train_loss
                     torch.save(self.strategy.module.state_dict(),
-                               os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.backbone.get_model_name(),
-                                                                                   self.strategy.head.get_model_name())))
+                               os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
+                                                                                   self.strategy.module.head.get_model_name())))
                     patience_count = 0
                     log_info += 'best-save '
                 else:
@@ -200,8 +202,8 @@ class Trainer(object):
                     break
             print(log_info)
         torch.save(self.strategy.module.state_dict(),
-                   os.path.join(self.check_point_path, '%s-%s-final' % (self.strategy.backbone.get_model_name(),
-                                                                        self.strategy.head.get_model_name())))
+                   os.path.join(self.check_point_path, '%s-%s-final' % (self.strategy.module.backbone.get_model_name(),
+                                                                        self.strategy.module.head.get_model_name())))
 
         if self.rank == 0:
             if os.path.exists(os.path.join(self.check_point_path, "initial_weights.pt")) is True:

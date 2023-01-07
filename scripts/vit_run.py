@@ -40,10 +40,11 @@ if __name__ == '__main__':
 
 
         ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.6', 'vit_span_cls_raw', 64), 
-        ('vit_b_16_0.7', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.8', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.9', 'vit_span_cls_raw', 64),
+        # ('vit_b_16_0.6', 'vit_span_cls_raw', 64),
+        # ('vit_b_16_0.7', 'vit_span_cls_raw', 64),
+        # ('vit_b_16_0.8', 'vit_span_cls_raw', 64),
+        # ('vit_b_16_0.9', 'vit_span_cls_raw', 64),
+
         # ('vit_b_32_0.5', 'vit_span_cls_raw', 128),
         # ('vit_b_64', 'vit_span_cls_raw', 128),
 
@@ -52,15 +53,15 @@ if __name__ == '__main__':
         # ('vit_ms_2', 'vit_span_cls_freq', 128),
         # ('vit_ms_4', 'vit_span_cls_freq', 128),
         # ('vit_ms_8', 'vit_span_cls_freq', 128),
-        ('vit_ms_16_0.6', 'vit_span_cls_raw', 128),
-        ('vit_ms_32_0.6', 'vit_span_cls_raw', 128),
+        # ('vit_ms_16_0.6', 'vit_span_cls_raw', 128),
+        # ('vit_ms_32_0.6', 'vit_span_cls_raw', 128),
         # ('vit_ms_64', 'vit_span_cls_raw', 128),
         #
         # ('vit_es_2', 'vit_span_cls_freq', 128),
         # ('vit_es_4', 'vit_span_cls_freq', 128),
         # ('vit_es_8', 'vit_span_cls_freq', 128),
-        ('vit_es_16_0.6', 'vit_span_cls_raw', 128),
-        ('vit_es_32_0.6', 'vit_span_cls_raw', 128),
+        # ('vit_es_16_0.6', 'vit_span_cls_raw', 128),
+        # ('vit_es_32_0.6', 'vit_span_cls_raw', 128),
         # ('vit_es_64', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiVio')
