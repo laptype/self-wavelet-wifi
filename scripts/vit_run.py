@@ -5,11 +5,14 @@ import torch
 
 import sys
 sys.path.append('/home/lanbo/wifi_wavelet')
-os.environ['MKL_THREADING_LAYER'] = 'GNU'
-os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
+# os.environ['MKL_THREADING_LAYER'] = 'GNU'
+# os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
 from scripts.utils import *
 
+# tmux new -s wifi
+# tmux a -t wifi
+# /home/lanbo/anaconda3/envs/test/bin/python3 -u /home/lanbo/wifi_wavelet/scripts/vit_run.py
 
 if __name__ == '__main__':
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
