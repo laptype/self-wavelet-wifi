@@ -94,7 +94,8 @@ class Trainer(object):
         loss = self.strategy(data)
 
         loss.backward()
-        # loss = reduce_value(loss, average=True)
+
+        loss = reduce_value(loss, average=False)
 
         self.optimizer.step()
 
