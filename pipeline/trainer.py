@@ -25,7 +25,8 @@ class Trainer(object):
                  eval_epoch: int,
                  patience: int,
                  check_point_path: os.path,
-                 use_gpu=True):
+                 use_gpu=True,
+                 backbone_name=''):
         super(Trainer, self).__init__()
 
         self.strategy = strategy
@@ -58,6 +59,8 @@ class Trainer(object):
         self.gpu=0
 
         self.device = 'cuda'
+
+        self.backbone_name = backbone_name
     def _init_optimizer(self):
         params = [
             {'params': self.strategy.module.backbone.parameters()},
@@ -170,11 +173,15 @@ class Trainer(object):
                 train_loss += self._train_one_step(data)
 
                 if self.rank ==0:
-                    tbar.set_description('Epoch: %d: ' % (epoch + 1))
+                    tbar.set_description('%s: Epoch: %d: ' % (self.backbone_name,epoch + 1))
                     tbar.set_postfix(train_loss=train_loss)
 
             if self.rank==0:
                 tbar.close()
+
+            # 等待所有进程计算完毕
+            torch.cuda.synchronize(device)
+
             self.scheduler.step()
 
             if self.rank == 0:
@@ -203,9 +210,9 @@ class Trainer(object):
                     mini_train_loss = train_loss
                     if self.rank == 0:
                         log_info += 'best-save '
-                        torch.save(self.strategy.module.state_dict(),
-                                   os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
-                                                                                       self.strategy.module.head.get_model_name())))
+                        # torch.save(self.strategy.module.state_dict(),
+                        #            os.path.join(self.check_point_path, '%s-%s-best' % (self.strategy.module.backbone.get_model_name(),
+                        #                                                                self.strategy.module.head.get_model_name())))
                     patience_count = 0
                 else:
                     patience_count += 1

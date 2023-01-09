@@ -12,25 +12,33 @@ logger = logging.getLogger( )
 
 
 class WiFiVioDatasetConfig(DatasetConfig):
-    def __init__(self, datasource_path: os.path):
-        super(WiFiVioDatasetConfig, self).__init__('wifiVio', datasource_path)
-
+    def __init__(self, datasource_path: os.path, save_path: os.path):
+        super(WiFiVioDatasetConfig, self).__init__('wifiVio', datasource_path, save_path)
 
 def load_wifi_Vio_data(config: WiFiVioDatasetConfig):
 
     train_data = {"data_path": os.path.join(config.datasource_path, 'train'),
-                  "list_path": os.path.join(config.datasource_path, 'train_list.csv')}
+                  "list_path": os.path.join(config.datasource_path, 'train_list.csv'),
+                  "save_path": os.path.join(config.save_path, 'Train_dataset','train_dataset.csv')}
     test_data = {"data_path": os.path.join(config.datasource_path, 'test'),
-                  "list_path": os.path.join(config.datasource_path, 'test_list.csv')}
+                  "list_path": os.path.join(config.datasource_path, 'test_list.csv'),
+                 "save_path": os.path.join(config.save_path, 'Test_dataset', 'test_dataset.csv')}
+
+    for data in [train_data, test_data]:
+        if os.path.exists(data['save_path']):
+            os.remove(data['save_path'])
+
     return train_data, test_data
 
 class WiFiVioDataset(Dataset):
-    def __init__(self, data):
+    def __init__(self, data, is_test: bool):
         super(WiFiVioDataset, self).__init__()
 
         logger.info('加载WiFiVio数据集')
+        self.is_test = is_test
         self.data_path = data['data_path']
         self.data_list = pd.read_csv(data['list_path'])
+        self.save_path = data['save_path']
         self.tmp_data = self.data_list.iloc[0]['file']
         self.tmp_data = load_mat(os.path.join(data['data_path'], f'{self.tmp_data}.h5'))
 
@@ -48,12 +56,20 @@ class WiFiVioDataset(Dataset):
     def __getitem__(self, index):
         data = load_mat(os.path.join(self.data_path,
                                      f'{self.data_list.iloc[index]["file"]}.h5'))
+        if self.is_test:
+            pd.DataFrame([[index, f'{self.data_list.iloc[index]["file"]}']]).to_csv(self.save_path, mode='a',index=False, header=False)
+            return {
+                'data': torch.from_numpy(data['amp']).float(),
+                # 'freq_data': self.freq_data[index],
+                'label': torch.from_numpy(data['label']).long()-1,
+                'index': torch.tensor(index)
+            }
+        else:
+            return {
+                'data': torch.from_numpy(data['amp']).float(),
+                'label': torch.from_numpy(data['label']).long()-1,
+            }
 
-        return {
-            'data': torch.from_numpy(data['amp']).float(),
-            # 'freq_data': self.freq_data[index],
-            'label': torch.from_numpy(data['label']).long()-1,
-        }
 
     def __len__(self):
         return self.num_sample

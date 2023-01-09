@@ -106,10 +106,11 @@ def init_configs() -> BasicConfig:
     )
 
     if args.tab != '':
-        configs.check_point_path = os.path.join(configs.check_point_path, args.tab)
+        configs.check_point_path = os.path.join(configs.check_point_path, args.tab, '%s' % configs.backbone_name)
         
     if not os.path.exists(configs.check_point_path):
         os.makedirs(configs.check_point_path)
+
     configs.gpu_device = args.gpu_device
 
     # train

@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s-%(filename)s-%(level
 logger = logging.getLogger(__name__)
 
 
-def init_dataset(dataset_name: str, datasource_path: os.path):
+def init_dataset(dataset_name: str, datasource_path: os.path, check_point_path: os.path, is_test: bool):
     name, *_ = dataset_name.split('_')
 
     if dataset_name.startswith('WiAR'):
@@ -58,10 +58,10 @@ def init_dataset(dataset_name: str, datasource_path: os.path):
         '''
         WiVio
         '''
-        dataset_config = WiFiVioDatasetConfig(os.path.join(datasource_path))
+        dataset_config = WiFiVioDatasetConfig(os.path.join(datasource_path), os.path.join(check_point_path))
         from data_process import load_wifi_Vio_data, WiFiVioDataset
         train_dataset, test_dataset = load_wifi_Vio_data(dataset_config)
-        train_dataset, test_dataset = WiFiVioDataset(train_dataset), WiFiVioDataset(test_dataset)
+        train_dataset, test_dataset = WiFiVioDataset(train_dataset, is_test=is_test), WiFiVioDataset(test_dataset, is_test=is_test)
         return train_dataset, test_dataset
 
 

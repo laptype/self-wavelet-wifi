@@ -16,7 +16,7 @@ def train(config: TrainConfig):
     # if config.gpu_device is not None:
     #     os.environ["CUDA_VISIBLE_DEVICES"] = config.gpu_device
 
-    train_dataset, eval_dataset = init_util.init_dataset(config.dataset_name, config.datasource_path)
+    train_dataset, eval_dataset = init_util.init_dataset(config.dataset_name, config.datasource_path,  config.check_point_path, is_test=False)
     strategy = init_util.init_strategy(config.backbone_name,
                                        config.head_name,
                                        config.strategy_name,
@@ -41,6 +41,7 @@ def train(config: TrainConfig):
         patience=config.patience,
         check_point_path=config.check_point_path,
         use_gpu=False if config.gpu_device is None else True,
+        backbone_name=config.backbone_name
     )
 
     trainer.training()

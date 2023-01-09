@@ -23,27 +23,30 @@ if __name__ == '__main__':
     config = DatasetDefaultConfig()
 
     model_list = [
-        # ('vit_b_2', 'vit_span_cls_freq', 128),
-        # ('vit_b_4', 'vit_span_cls_freq', 128),
-        # ('vit_b_8', 'vit_span_cls_freq', 128),
 
-        # ('vit_b_16', 'vit_span_cls_raw', 128),
-        # ('vit_b_32', 'vit_span_cls_raw', 128),
-        # ('vit_b_64', 'vit_span_cls_raw', 128),
-        #
-        # ('vit_s_2', 'vit_span_cls_freq', 128),
-        # ('vit_s_4', 'vit_span_cls_freq', 128),
-        # ('vit_s_8', 'vit_span_cls_freq', 128),
+        ('vit_b_16_0.2', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.3', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.4', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.6', 'vit_span_cls_raw', 64),
+        ('vit_b_16_0.7', 'vit_span_cls_raw', 64),
 
-        # ('vit_s_16_0.5', 'vit_span_cls_raw', 64),
-        # ('vit_s_32', 'vit_span_cls_raw', 64),
+        # patch_size
+        ('vit_b_8_0.5', 'vit_span_cls_raw', 64),
+        ('vit_b_32_0.5', 'vit_span_cls_raw', 64),
+        ('vit_b_64_0.5', 'vit_span_cls_raw', 64),
 
+        ('vit_s_16_0.2', 'vit_span_cls_raw', 64),
+        ('vit_s_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_s_16_0.6', 'vit_span_cls_raw', 64),
 
-        # ('vit_b_16_0.5', 'vit_span_cls_raw', 64),
-        ('vit_b_16_0.6', 'vit_span_cls_raw', 128),
-        ('vit_b_16_0.7', 'vit_span_cls_raw', 128),
-        ('vit_b_16_0.8', 'vit_span_cls_raw', 128),
-        ('vit_b_16_0.9', 'vit_span_cls_raw', 128),
+        ('vit_ms_16_0.2', 'vit_span_cls_raw', 64),
+        ('vit_ms_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_ms_16_0.6', 'vit_span_cls_raw', 64),
+
+        ('vit_es_16_0.2', 'vit_span_cls_raw', 64),
+        ('vit_es_16_0.5', 'vit_span_cls_raw', 64),
+        ('vit_es_16_0.6', 'vit_span_cls_raw', 64),
 
         # ('vit_b_32_0.5', 'vit_span_cls_raw', 128),
         # ('vit_b_64', 'vit_span_cls_raw', 128),
@@ -54,26 +57,26 @@ if __name__ == '__main__':
         # ('vit_ms_4', 'vit_span_cls_freq', 128),
         # ('vit_ms_8', 'vit_span_cls_freq', 128),
         # ('vit_ms_16_0.6', 'vit_span_cls_raw', 64),
-        # ('vit_ms_32_0.6', 'vit_span_cls_raw', 64),
+        # ('vit_ms_16_0.7', 'vit_span_cls_raw', 64),
+        # ('vit_ms_16_0.8', 'vit_span_cls_raw', 64),
         # ('vit_ms_64', 'vit_span_cls_raw', 128),
         #
         # ('vit_es_2', 'vit_span_cls_freq', 128),
         # ('vit_es_4', 'vit_span_cls_freq', 128),
         # ('vit_es_8', 'vit_span_cls_freq', 128),
         # ('vit_es_16_0.6', 'vit_span_cls_raw', 64),
-        # ('vit_es_32_0.6', 'vit_span_cls_raw', 64),
+        # ('vit_es_16_0.7', 'vit_span_cls_raw', 64),
+        # ('vit_es_16_0.8', 'vit_span_cls_raw', 64),
         # ('vit_es_64', 'vit_span_cls_raw', 128),
     ]
     config.dataset_list.append(f'WiVio')
     print(config.dataset_list)
     for dataset_name in config.dataset_list:
         for module in model_list:
-            """
-                修改log输出地址，datasource_path 在 sh 里面改
-            """
-            log_name = 'log_dataset3'
-            tab = 'dataset3'
-            datasource_path = '/home/lanbo/dataset/wifi_violence_processed3/'
+
+            log_name = 'day_1_8'
+            tab = 'day_1_8'
+            datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
 
             log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
             if not os.path.exists(log_path):
@@ -120,9 +123,21 @@ if __name__ == '__main__':
             #             --test_batch_size {test_batch_size} \
             #             > {dataset_name}-{strategy_name}-TEST.log')
 
-
-
             os.system(
                 'bash /home/lanbo/wifi_wavelet/scripts/script_run.sh %d %s %s %s %s %d %s %s %s' %
                 (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size, log_path, datasource_path, tab)
             )
+
+            # ----------------------------------------------------
+            # log_name = 'log_day_1_8_data0'
+            # tab = 'day_1_8_data0'
+            # datasource_path = '/home/lanbo/dataset/wifi_violence_processed/'
+            #
+            # log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
+            # if not os.path.exists(log_path):
+            #     os.makedirs(log_path)
+
+            # os.system(
+            #     'bash /home/lanbo/wifi_wavelet/scripts/script_run.sh %d %s %s %s %s %d %s %s %s' %
+            #     (cuda, dataset_name, backbone_name, head_name, strategy_name, batch_size, log_path, datasource_path, tab)
+            # )

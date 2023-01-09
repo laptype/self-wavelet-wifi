@@ -16,9 +16,13 @@ eval_batch_size=1
 num_epoch=500
 
 opt_method="adamw"
+# 0.01
 lr_rate=2e-4
+#
 weight_decay=1e-4
+# lr_rate_adjust_epoch=40
 lr_rate_adjust_epoch=100
+#lr_rate_adjust_factor=0.5
 lr_rate_adjust_factor=0.2
 save_epoch=501
 eval_epoch=501

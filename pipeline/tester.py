@@ -50,6 +50,9 @@ class Tester(object):
         self.confusion = {
             key: np.zeros((n_class, n_class), dtype=np.int32) for key, n_class in n_classes.items()
         }
+        self.file_name = {
+            key: [[[] for _ in range (n_class)] for _ in range(n_class)] for key, n_class in n_classes.items()
+        }
         self.output_path = output_path
 
     def _to_var(self, data: dict):
@@ -72,8 +75,10 @@ class Tester(object):
                 for key in self.n_classes.keys():
                     prediction = torch.max(prob[key], dim=1)[1]
                     label = data[key]
-                    for pred, gt in zip(prediction, label):
+                    index = data['index']
+                    for pred, gt, i in zip(prediction, label, index):
                         self.confusion[key][pred][gt] += 1
+                        self.file_name[key][pred][gt].append(i.item())
 
         for key in self.n_classes.keys():
             print(key.center(100, '='))
@@ -95,3 +100,8 @@ class Tester(object):
                 self.strategy.head.get_model_name(),
                 key,
             )), index=False, header=False)
+
+            pd.DataFrame(self.file_name[key]).to_csv(os.path.join(self.output_path,
+                                                                  '%s-%s-%s-file_name.csv' % (self.strategy.backbone.get_model_name(),
+                                                                                              self.strategy.head.get_model_name(),
+                                                                                              key)), index=False, header=False)
