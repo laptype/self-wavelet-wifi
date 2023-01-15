@@ -12,10 +12,11 @@ import numpy as np
 from ..function import (
     WaveAttention,
     StdAttention,
-    WaveAttention2,
+    WaveAttention_wave2,
     WaveAttention_lh,
     WaveAttention_2,
     WaveAttention_lh2,
+    WaveAttention2_2
 )
 from ..model_config import ModelConfig
 
@@ -32,7 +33,7 @@ class WaveVitConfig(ModelConfig):
     n_head = 12
     dim_mlp_hidden = 2048
     expansion_factor = 4
-    dropout = 0.1
+    dropout = 0.5
     pooling = False
     MAX_PATCH_NUMS = 1000
 
@@ -41,11 +42,13 @@ class WaveVitConfig(ModelConfig):
 
     def __init__(self, model_name: str):
         super(WaveVitConfig, self).__init__(model_name)
-        # wavevit_wave_4_s_16
-        _, attn_type, attn_type_layer, scale, patch_size = model_name.split('_')
+        # wavevit_wave_4_s_16_0.5
+        _, attn_type, attn_type_layer, scale, patch_size, dropout, droppath = model_name.split('_')
         self.attn_type_layer = int(attn_type_layer)
         self.patch_size = int(patch_size)
         self.attn_type = attn_type
+        self.dropout = float(dropout)
+        self.droppath = float(droppath)
         if scale == 'es':
             # Extra Small
             self.d_model = 128
@@ -92,14 +95,14 @@ class Block(nn.Module):
                  num_heads,
                  N_dim,
                  dim_mlp_hidden = 2048,
-                 dropout = 0.1,
+                 dropout = 0.5,
                  norm_layer = nn.LayerNorm,
                  attn_type = 'wave',
                  act_layer = nn.GELU,
                  qkv_bias = True,
-                 attn_drop = 0.,
+                 attn_drop = 0.5,
                  init_values=None,
-                 drop_path=0.,
+                 drop_path=0.1,
                  sr_ratio=1
                  ):
         super().__init__()
@@ -120,13 +123,13 @@ class Block(nn.Module):
         elif attn_type == 'timm':
             self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wave2':
-            self.attn = WaveAttention2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+            self.attn = WaveAttention_wave2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wavelh':
-            self.attn = WaveAttention_lh(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+            self.attn = WaveAttention_lh(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wavelh2':
-            self.attn = WaveAttention_lh2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
-        elif attn_type == 'wave12':
-            self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
+            self.attn = WaveAttention_lh2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        # elif attn_type == 'wave12':
+        #     self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:
         #     self.attn = StdAttention()
 
@@ -159,6 +162,8 @@ class WaveVit(nn.Module):
                  embed_dim = 768,
                  num_head = 12,
                  # dim_mlp_hidden = 2048,
+                 dropout = 0.5,
+                 drop_path = 0.1,
                  expansion_factor=4,
                  depth = 12,
                  MAX_PATCH_NUMS = 1000,
@@ -180,6 +185,7 @@ class WaveVit(nn.Module):
         self.MAX_PATCH_NUMS = MAX_PATCH_NUMS
         self.pooling = pooling
         self.dim_mlp_hidden = embed_dim * expansion_factor
+        self.dropout = dropout
         # --------------------------------------------------------------------------
         #
         self.cls_embed = nn.Parameter(torch.empty((1, 1, embed_dim)), requires_grad=True)
@@ -195,8 +201,10 @@ class WaveVit(nn.Module):
                                     num_heads=num_head,
                                     N_dim=self.N_dim,
                                     dim_mlp_hidden=self.dim_mlp_hidden,
-                                    dropout=0.1,
+                                    dropout=dropout,
+                                    attn_drop=dropout,
                                     # attn_type='timm',
+                                    drop_path=drop_path,
                                     attn_type=self.attn_type,
                                     sr_ratio=1))
 
@@ -267,6 +275,8 @@ class WaveVit(nn.Module):
 
 def waveVit_wifi(config: WaveVitConfig):
     model = WaveVit(
+        dropout=config.dropout,
+        drop_path=config.droppath,
         model_name=config.model_name,
         num_classes=config.num_classes,
         n_channel=config.n_channel,

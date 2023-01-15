@@ -78,14 +78,14 @@ class WaveAttention(nn.Module):
         return x
 
 
-class WaveAttention2(nn.Module):
+class WaveAttention_wave2(nn.Module):
     def __init__(self,
                  dim,
                  N_dim,
                  num_heads=8,
                  qkv_bias=False,
-                 attn_drop=0.,
-                 proj_drop=0.
+                 attn_drop=0.5,
+                 proj_drop=0.5
                  ):
         super().__init__()
         # assert dim % 2 == 0, "dim should be divisible by 2"
@@ -160,8 +160,8 @@ class WaveAttention_lh(nn.Module):
                  N_dim,
                  num_heads=8,
                  qkv_bias=False,
-                 attn_drop=0.,
-                 proj_drop=0.
+                 attn_drop=0.5,
+                 proj_drop=0.5
                  ):
         super().__init__()
         assert dim % 2 == 0, "dim should be divisible by 2"
