@@ -40,8 +40,8 @@ class ViTSpanCLS(nn.Module):
                                (0, self.config.patch_size - (batch_data.size(2) % self.config.patch_size)),
                                'constant', 0)
 
-        features = self.backbone(batch_data)
-        logits = self.head(features)
+        features = self.backbone(batch_data) # VIT
+        logits = self.head(features) # 分类
         return logits
 
     def forward(self, input):

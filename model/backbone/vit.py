@@ -19,7 +19,6 @@ class ViTConfig(ModelConfig):
     dropout = 0.1
     pooling = False
     MAX_PATCH_NUMS = 1000
-
     def __init__(self, model_name: str):
         super(ViTConfig, self).__init__(model_name)
         # vit_s_16_0.5

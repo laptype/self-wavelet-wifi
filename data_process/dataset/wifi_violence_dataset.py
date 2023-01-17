@@ -97,9 +97,9 @@ if __name__ == '__main__':
     datasource_path = os.path.join("D:\study\dataset\wifi-partition-data-abs\dataset")
     # datasource_path = os.path.join("D:\study\dataset\wifi-partition-data-abs\dataset")
 
-    train_data, test_data = load_wifi_Vio_data(WiFiVioDatasetConfig(datasource_path))
-    train_dataset = WiFiVioDataset(train_data)
-    test_dataset = WiFiVioDataset(test_data)
+    train_data, test_data = load_wifi_Vio_data(WiFiVioDatasetConfig(datasource_path, ''))
+    train_dataset = WiFiVioDataset(train_data, False)
+    test_dataset = WiFiVioDataset(test_data, False)
 
     logger.info(len(train_dataset))
     logger.info(len(test_dataset))

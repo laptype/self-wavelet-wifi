@@ -16,7 +16,8 @@ from ..function import (
     WaveAttention_lh,
     WaveAttention_2,
     WaveAttention_lh2,
-    WaveAttention2_2
+    WaveAttention2_2,
+    WaveAttention_test
 )
 from ..model_config import ModelConfig
 
@@ -128,6 +129,8 @@ class Block(nn.Module):
             self.attn = WaveAttention_lh(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wavelh2':
             self.attn = WaveAttention_lh2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        elif attn_type == 'test':
+            self.attn = WaveAttention_test(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         # elif attn_type == 'wave12':
         #     self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:

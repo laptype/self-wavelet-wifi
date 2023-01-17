@@ -54,6 +54,7 @@ def init_dataset(dataset_name: str, datasource_path: os.path, check_point_path: 
         train_dataset, test_dataset = load_WiAR_dataset(dataset_config)
         train_dataset, test_dataset = WiFiARDataset(train_dataset), WiFiARDataset(test_dataset)
         return train_dataset, test_dataset
+
     if dataset_name.startswith('WiVio'):
         '''
         WiVio
@@ -322,8 +323,8 @@ def init_strategy(backbone_name: str, head_name: str, strategy_name: str, n_chan
     elif isinstance(strategy_config, strategy.single_stream.ViTSpanCLSConfig):
         from strategy.single_stream import ViTSpanCLS
         if strategy_config.calc_data == 'raw':
-            backbone_config.n_channel = n_channels['data']
-            backbone_config.seq_len = seq_lens['data']
+            backbone_config.n_channel = n_channels['data']  # 90
+            backbone_config.seq_len = seq_lens['data']      # 5000
         elif strategy_config.calc_data == 'freq':
             backbone_config.n_channel = n_channels['freq_data']
             backbone_config.seq_len = seq_lens['freq_data']

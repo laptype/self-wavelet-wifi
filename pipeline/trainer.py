@@ -98,6 +98,7 @@ class Trainer(object):
 
         loss.backward()
 
+        # 同步
         loss = reduce_value(loss, average=False)
 
         self.optimizer.step()
@@ -125,7 +126,6 @@ class Trainer(object):
             train_sampler, self.batch_size, drop_last=True)
 
         nw = min([os.cpu_count(), self.batch_size if self.batch_size > 1 else 0, 8])  # number of workers
-
         if self.rank == 0:
             print('Using {} dataloader workers every process'.format(nw))
 
@@ -157,7 +157,7 @@ class Trainer(object):
         mini_train_loss = float('inf')
         for epoch in range(self.num_epoch):
 
-            train_sampler.set_epoch(epoch)
+            train_sampler.set_epoch(epoch) # 打乱分配的数据
 
             self.strategy.train()
             if self.rank == 0:

@@ -54,17 +54,22 @@ if __name__ == '__main__':
         # ('wavevit_wavelh_8_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
 
         # ('wavevit_wave2_0_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
-        ('wavevit_wave2_4_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
-        ('wavevit_wave2_8_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
-
-        ('wavevit_wave2_4_s_32_0.4_0.1', 'vit_span_cls_raw', 64),
-        ('wavevit_wave2_8_s_32_0.4_0.1', 'vit_span_cls_raw', 64),
+        # ('wavevit_wave2_4_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
+        # ('wavevit_wave2_8_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
+        #
+        # ('wavevit_wave2_4_s_32_0.4_0.1', 'vit_span_cls_raw', 64),
+        # ('wavevit_wave2_8_s_32_0.4_0.1', 'vit_span_cls_raw', 64),
 
         # ('wavevit_wavelh2_0_s_16_0.4_0.0', 'vit_span_cls_raw', 64),
         # ('wavevit_wavelh2_0_s_16_0.4_0.2', 'vit_span_cls_raw', 64),
         # ('wavevit_wavelh2_0_s_16_0.4_0.3', 'vit_span_cls_raw', 64),
 
-        # ('vit_s_16_0.6', 'vit_span_cls_raw', 64),
+
+        ('wavevit_test_4_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
+        ('wavevit_test_8_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
+        ('wavevit_test_0_s_16_0.4_0.1', 'vit_span_cls_raw', 64),
+
+        # ('vit_b_32_0.4', 'vit_span_cls_raw', 64),
 
         # ('vit_ms_16_0.2', 'vit_span_cls_raw', 64),
         # ('vit_ms_16_0.5', 'vit_span_cls_raw', 64),
@@ -105,8 +110,8 @@ if __name__ == '__main__':
             strategy_name = module[1]
             batch_size = module[2]
 
-            log_name = 'day_1_13_wave'
-            tab = 'day_1_13_wave'
+            log_name = 'day_1_13_wave_test'
+            tab = 'day_1_13_wave_test'
             datasource_path = '/home/lanbo/dataset/wifi_violence_processed_loc/'
 
             log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
