@@ -31,6 +31,7 @@ def init_configs() -> BasicConfig:
     parser.add_argument('--dataset_name', dest="dataset_name", required=True, type=str,
                         help="数据集名，内含相应参数：随机索引及是否使用相位等")
     parser.add_argument('--datasource_path', dest="datasource_path", required=False, type=str,
+                        # help="数据集源路径", default='D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset')
                         help="数据集源路径", default='D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset')
     parser.add_argument('--check_point_path', dest="check_point_path", required=False, type=str,
                         help="模型以及预测结果保存路径", default='/home/lanbo/wifi_wavelet/result/checkpoint/')
@@ -99,6 +100,8 @@ def init_configs() -> BasicConfig:
     elif configs.dataset_name.startswith('hthi'):
         configs.datasource_path = os.path.join(args.datasource_path, 'hthi')
     elif configs.dataset_name.startswith('WiVio'):
+        configs.datasource_path = os.path.join(args.datasource_path)
+    elif configs.dataset_name.startswith('AUGWiVio'):
         configs.datasource_path = os.path.join(args.datasource_path)
 
     configs.check_point_path = os.path.join(

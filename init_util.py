@@ -29,6 +29,8 @@ from model import (
     WiFiARLateFusionSpanCLSConfig,
 )
 
+from util import augmentation
+
 import strategy
 import strategy.single_stream
 
@@ -38,8 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_dataset(dataset_name: str, datasource_path: os.path, check_point_path: os.path, is_test: bool):
-    name, *_ = dataset_name.split('_')
-
+    # name, *_ = dataset_name.split('_')
     if dataset_name.startswith('WiAR'):
         '''
         WiAR_(train_val_rate)
@@ -59,11 +60,36 @@ def init_dataset(dataset_name: str, datasource_path: os.path, check_point_path: 
         '''
         WiVio
         '''
+        if dataset_name.startswith('WiVioAUG'):
+            name, *augs = dataset_name.split('_')
+            if len(augs) == 0:
+                augs_list = None
+            else:
+                augs_list = []
+                for aug in augs:
+                    if aug == 'jitter':
+                        augs_list.append(augmentation.jitter)
+                    elif aug == 'scaling':
+                        augs_list.append(augmentation.scaling)
+                    elif aug == 'rotate':
+                        augs_list.append(augmentation.rotation)
+                    elif aug == 'magwarp':
+                        augs_list.append(augmentation.magnitude_warp)
+                    elif aug == 'window-s':
+                        augs_list.append(augmentation.window_slice)
+                    elif aug == 'window-w':
+                        augs_list.append(augmentation.window_warp)
+                    elif aug == 'mean':
+                        augs_list.append('mean-mix')
+        else:
+            augs_list = None
+
         dataset_config = WiFiVioDatasetConfig(os.path.join(datasource_path), os.path.join(check_point_path))
         from data_process import load_wifi_Vio_data, WiFiVioDataset
         train_dataset, test_dataset = load_wifi_Vio_data(dataset_config)
-        train_dataset, test_dataset = WiFiVioDataset(train_dataset, is_test=is_test), WiFiVioDataset(test_dataset, is_test=is_test)
+        train_dataset, test_dataset = WiFiVioDataset(train_dataset, is_test=is_test, augs_list=augs_list), WiFiVioDataset(test_dataset, is_test=is_test)
         return train_dataset, test_dataset
+
 
 
 def _init_backbone_config(backbone_name: str):

@@ -7,7 +7,6 @@ from torch.utils.data.dataset import Dataset
 from data_process.dataset_config import DatasetConfig
 
 from util import log_f_ch, load_mat
-from util import augmentation
 
 logger = logging.getLogger( )
 
@@ -32,7 +31,7 @@ def load_wifi_Vio_data(config: WiFiVioDatasetConfig):
     return train_data, test_data
 
 class WiFiVioDataset(Dataset):
-    def __init__(self, data, is_test: bool, augs_list = None):
+    def __init__(self, data, is_test: bool):
         super(WiFiVioDataset, self).__init__()
 
         logger.info('加载WiFiVio数据集')
@@ -48,8 +47,6 @@ class WiFiVioDataset(Dataset):
 
         self.label_n_class = 7
         self.freq_n_channel, self.freq_seq_len = None, None
-
-        self.augs_list = augs_list
 
         logger.info(log_f_ch('num_sample: ', str(self.num_sample)))
         logger.info(log_f_ch('n_class: ', str(self.label_n_class)))
@@ -68,15 +65,8 @@ class WiFiVioDataset(Dataset):
                 'index': torch.tensor(index)
             }
         else:
-            data_aug = data['amp']
-            if self.augs_list is not None:
-                for aug in self.augs_list:
-                    if aug == 'mean-mix':
-                        data_aug = augmentation.mean_mix(data_aug, self.data_path, self.data_list.iloc[index]["file"])
-                    else:
-                        data_aug = aug(data_aug)
             return {
-                'data': torch.from_numpy(data_aug).float(),
+                'data': torch.from_numpy(data['amp']).float(),
                 'label': torch.from_numpy(data['label']).long()-1,
             }
 

@@ -17,13 +17,14 @@ from ..function import (
     WaveAttention_2,
     WaveAttention_lh2,
     WaveAttention2_2,
-    WaveAttention_test
+    WaveAttention_test,
+    WaveAttention_wave2_2
 )
 from ..model_config import ModelConfig
 
 class WaveVitConfig(ModelConfig):
     """
-        model_name format: wavevit_(attn_type)_(attn_type_ratio)_(scale)_(patch_size)
+        model_name format: wavevit_(attn_type)_(attn_type_ratio)_(scale)_(patch_size)_dropout_droppath
     """
     num_classes = 7
     seq_len = 224
@@ -131,6 +132,8 @@ class Block(nn.Module):
             self.attn = WaveAttention_lh2(dim=dim,  N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'test':
             self.attn = WaveAttention_test(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        elif attn_type == 'wave22':
+            self.attn = WaveAttention_wave2_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
         # elif attn_type == 'wave12':
         #     self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
         # else:

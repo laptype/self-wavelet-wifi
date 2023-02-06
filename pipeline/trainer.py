@@ -6,8 +6,9 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torch.utils.tensorboard import SummaryWriter
-
+import random
 from util import init_distributed_mode, dist, cleanup, reduce_value
+import numpy as np
 
 class Trainer(object):
     def __init__(self,
@@ -106,7 +107,7 @@ class Trainer(object):
         return loss.item()
 
     def training(self):
-
+        self.set_seed(2023)
         init_distributed_mode(args=self)
 
         if self.use_gpu:
@@ -158,7 +159,7 @@ class Trainer(object):
         for epoch in range(self.num_epoch):
 
             train_sampler.set_epoch(epoch) # 打乱分配的数据
-
+            np.random.seed(epoch)
             self.strategy.train()
             if self.rank == 0:
                 log_info = 'Epoch: %d. ' % (epoch + 1)
@@ -239,3 +240,11 @@ class Trainer(object):
 
         cleanup()
         print('dist.destroy_process_group()')
+
+    def set_seed(self, seed):
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.cuda.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.backends.cudnn.deterministic =True
