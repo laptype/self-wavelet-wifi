@@ -25,6 +25,7 @@ def train(config: TrainConfig):
 
     # ----------------------------- TRAIN---------------------------
 
+    _, aug = config.dataset_name.split('_')
     trainer = Trainer(
         strategy=strategy,
         train_dataset=train_dataset,
@@ -41,7 +42,8 @@ def train(config: TrainConfig):
         patience=config.patience,
         check_point_path=config.check_point_path,
         use_gpu=False if config.gpu_device is None else True,
-        backbone_name=config.backbone_name
+        backbone_name=config.backbone_name,
+        aug = aug
     )
 
     trainer.training()

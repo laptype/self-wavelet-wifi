@@ -2,10 +2,9 @@ import numpy as np
 from tqdm import tqdm
 from util import log_f_ch, load_mat
 import os
-def jitter(x, sigma=0.05):
+def jitter(x, sigma=0.15):
     # https://arxiv.org/pdf/1706.00527.pdf
     return x + np.random.normal(loc=0., scale=sigma, size=x.shape)
-
 
 def scaling(x, sigma=0.1):
     # https://arxiv.org/pdf/1706.00527.pdf
@@ -16,7 +15,7 @@ def rotation(x):
     flip = np.random.choice([-1, 1])
     return np.multiply(x, flip[np.newaxis,np.newaxis])
 
-def magnitude_warp(x, sigma=0.2, knot=4):
+def magnitude_warp(x, sigma=0.4, knot=10):
     from scipy.interpolate import CubicSpline
     orig_steps = np.arange(x.shape[1])
 
@@ -28,7 +27,7 @@ def magnitude_warp(x, sigma=0.2, knot=4):
 
     return ret
 
-def window_slice(x, reduce_ratio=0.96):
+def window_slice(x, reduce_ratio=0.9):
     # https://halshs.archives-ouvertes.fr/halshs-01357973/document
     target_len = np.ceil(reduce_ratio*x.shape[1]).astype(int)
     if target_len >= x.shape[1]:

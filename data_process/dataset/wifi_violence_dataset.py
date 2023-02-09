@@ -9,6 +9,8 @@ from data_process.dataset_config import DatasetConfig
 from util import log_f_ch, load_mat
 from util import augmentation
 
+import numpy as np
+
 logger = logging.getLogger( )
 
 
@@ -69,12 +71,24 @@ class WiFiVioDataset(Dataset):
             }
         else:
             data_aug = data['amp']
-            if self.augs_list is not None:
-                for aug in self.augs_list:
-                    if aug == 'mean-mix':
-                        data_aug = augmentation.mean_mix(data_aug, self.data_path, self.data_list.iloc[index]["file"])
-                    else:
-                        data_aug = aug(data_aug)
+            # 40% 原始
+            # 30% a
+            # 30% b
+
+            # if np.random.rand() < 0.6:
+            #     if self.augs_list is not None:
+            #         for aug in self.augs_list:
+            #             if aug == 'mean-mix':
+            #                 data_aug = augmentation.mean_mix(data_aug, self.data_path, self.data_list.iloc[index]["file"])
+            #             elif aug == 'window-s_magwarp':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.magnitude_warp)
+            #             elif aug == 'window-s_window-w':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.window_warp)
+            #             elif aug == 'window-s_mean-mix':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.mean_mix)
+            #             else:
+            #                 data_aug = aug(data_aug)
+
             return {
                 'data': torch.from_numpy(data_aug).float(),
                 'label': torch.from_numpy(data['label']).long()-1,
@@ -100,6 +114,13 @@ class WiFiVioDataset(Dataset):
         return {
             'label': self.label_n_class,
         }
+
+
+def rand_aug(data, aug1, aug2, randi=0.5):
+    if np.random.rand() > randi:
+        return aug1(data)
+    else:
+        return aug2(data)
 
 
 if __name__ == '__main__':

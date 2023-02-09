@@ -2,6 +2,8 @@ import os
 import argparse
 import logging
 import math
+import numpy as np
+
 
 from data_process import (
     WiFiARDatasetConfig,
@@ -81,6 +83,12 @@ def init_dataset(dataset_name: str, datasource_path: os.path, check_point_path: 
                         augs_list.append(augmentation.window_warp)
                     elif aug == 'mean':
                         augs_list.append('mean-mix')
+                    elif aug == 'w-s-mag':
+                        augs_list.append('window-s_magwarp')
+                    elif aug == 'w-s-w-w':
+                        augs_list.append('window-s_window-w')
+                    elif aug == 'w-s-mean':
+                        augs_list.append('window-s_mean-mix')
         else:
             augs_list = None
 
