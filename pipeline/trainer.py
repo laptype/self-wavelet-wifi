@@ -170,12 +170,25 @@ class Trainer(object):
             train_loss = 0
 
             for data in tbar:
+                #
                 data = self._to_var(data, device)
                 train_loss += self._train_one_step(data)
+
+                #
+                # data_aug
+                # train_loss += self._train_one_step(data_aug)
 
                 if self.rank ==0:
                     tbar.set_description('%s: Epoch: %d: ' % (self.backbone_name,epoch + 1))
                     tbar.set_postfix(train_loss=train_loss)
+                # （6, 90, 1000）
+                # data = aug(data)
+                # train_loss += self._train_one_step(data)
+                #
+                # if self.rank ==0:
+                #     tbar.set_description('%s: Epoch: %d: ' % (self.backbone_name,epoch + 1))
+                #     tbar.set_postfix(train_loss=train_loss)
+
 
             if self.rank==0:
                 tbar.close()
