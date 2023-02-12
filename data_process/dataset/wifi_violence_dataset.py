@@ -75,6 +75,20 @@ class WiFiVioDataset(Dataset):
                         data_aug = augmentation.mean_mix(data_aug, self.data_path, self.data_list.iloc[index]["file"])
                     else:
                         data_aug = aug(data_aug)
+
+            # if np.random.rand() < 0.6:
+            #     if self.augs_list is not None:
+            #         for aug in self.augs_list:
+            #             if aug == 'mean-mix':
+            #                 data_aug = augmentation.mean_mix(data_aug, self.data_path, self.data_list.iloc[index]["file"])
+            #             elif aug == 'window-s_magwarp':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.magnitude_warp)
+            #             elif aug == 'window-s_window-w':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.window_warp)
+            #             elif aug == 'window-s_mean-mix':
+            #                 data_aug = rand_aug(data_aug, augmentation.window_slice, augmentation.mean_mix)
+            #             else:
+            #                 data_aug = aug(data_aug)
             return {
                 'data': torch.from_numpy(data_aug).float(),
                 'label': torch.from_numpy(data['label']).long()-1,
