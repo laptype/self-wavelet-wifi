@@ -18,7 +18,9 @@ from ..function import (
     WaveAttention_lh2,
     WaveAttention2_2,
     WaveAttention_test,
-    WaveAttention_wave2_2
+    WaveAttention_wave2_2,
+WaveAttention_lh_res,
+WaveAttention_lh_l
 )
 from ..model_config import ModelConfig
 
@@ -134,10 +136,10 @@ class Block(nn.Module):
             self.attn = WaveAttention_test(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wave22':
             self.attn = WaveAttention_wave2_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
-        # elif attn_type == 'wave12':
-        #     self.attn = WaveAttention_2(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias)
-        # else:
-        #     self.attn = StdAttention()
+        elif attn_type == 'wavelhres':
+            self.attn = WaveAttention_lh_res(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
+        elif attn_type == 'wavel':
+            self.attn = WaveAttention_lh_l(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
 
         self.apply(self._init_weights)
 

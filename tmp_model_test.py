@@ -21,15 +21,16 @@ logging.getLogger().setLevel(logging.DEBUG)
 use_gpu = 1
 
 class Config:
-    dataset_name = 'WiAR_0.8'
-    datasource_path = 'D:\study\postgraduate\study_project\wavelet_wifi\self-wavelet-wifi\dataset\WiAR'
+    dataset_name = 'WiVioAUG_i-window-w-s'
+    datasource_path = '/home/lanbo/dataset/wifi_violence_processed_loc/'
+    check_point_path = ''
 
     # backbone_name = 'wavevit_wave12_4_test_16'
-    backbone_name = 'wavevit_wavelh2_4_test_16'
+    backbone_name = 'wavevit_wavel_4_s_16_0.4_0.1'
     head_name= 'wifi_ar_span_cls'
     strategy_name = 'vit_span_cls_raw'
 
-    train_batch_size = 128
+    train_batch_size = 64
 
 def _to_var(data: dict):
     if use_gpu:
@@ -42,7 +43,7 @@ def _to_var(data: dict):
 
 
 def test(config):
-    train_dataset, eval_dataset = init_util.init_dataset(config.dataset_name, config.datasource_path)
+    train_dataset, eval_dataset = init_util.init_dataset(config.dataset_name, config.datasource_path, config.check_point_path, is_test=False)
 
     strategy = init_util.init_strategy(config.backbone_name,
                                        config.head_name,
