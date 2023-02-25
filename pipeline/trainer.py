@@ -7,8 +7,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torch.utils.tensorboard import SummaryWriter
 import random
-from util import init_distributed_mode, dist, cleanup, reduce_value
+from util import init_distributed_mode, dist, cleanup, reduce_value, augmentation2
 import numpy as np
+
 
 class Trainer(object):
     def __init__(self,
@@ -27,7 +28,8 @@ class Trainer(object):
                  patience: int,
                  check_point_path: os.path,
                  use_gpu=True,
-                 backbone_name=''):
+                 backbone_name='',
+                 aug = 'None'):
         super(Trainer, self).__init__()
 
         self.strategy = strategy
@@ -62,6 +64,8 @@ class Trainer(object):
         self.device = 'cuda'
 
         self.backbone_name = backbone_name
+
+        self.aug = aug
     def _init_optimizer(self):
         params = [
             {'params': self.strategy.module.backbone.parameters()},
@@ -170,8 +174,44 @@ class Trainer(object):
             train_loss = 0
 
             for data in tbar:
+
+                data_aug = data.copy() # 浅拷贝
+
                 data = self._to_var(data, device)
                 train_loss += self._train_one_step(data)
+
+                rand_i = np.random.rand()
+
+                if self.aug == 'None': data_aug['data'] = data_aug['data'].numpy()
+                elif self.aug == 'i-jitter': data_aug['data'] = augmentation2.jitter(data_aug['data'].numpy())
+                elif self.aug == 'i-window-s': data_aug['data'] = augmentation2.window_slice(data_aug['data'].numpy())
+                elif self.aug == 'i-window-w': data_aug['data'] = augmentation2.window_warp(data_aug['data'].numpy())
+                elif self.aug == 'i-magwarp': data_aug['data'] = augmentation2.magnitude_warp(data_aug['data'].numpy())
+                elif self.aug == 'i-scaling': data_aug['data'] = augmentation2.scaling(data_aug['data'].numpy())
+                elif self.aug == 'i-window-w-j':
+                    if rand_i > 0.4:
+                        data_aug['data'] = augmentation2.window_warp(data_aug['data'].numpy())
+                    else:
+                        data_aug['data'] = augmentation2.jitter(data_aug['data'].numpy())
+                elif self.aug == 'i-window-w-m-j':
+                    if rand_i < 0.3:
+                        data_aug['data'] = augmentation2.jitter(data_aug['data'].numpy())
+                    elif rand_i > 0.66:
+                        data_aug['data'] = augmentation2.window_warp(data_aug['data'].numpy())
+                    else:
+                        data_aug['data'] = augmentation2.magnitude_warp(data_aug['data'].numpy())
+                elif self.aug == 'i-window-w-s':
+                    if rand_i > 0.5:
+                        data_aug['data'] = augmentation2.window_warp(data_aug['data'].numpy())
+                    else:
+                        data_aug['data'] = augmentation2.window_slice(data_aug['data'].numpy())
+
+
+
+                data_aug['data'] = torch.from_numpy(data_aug['data']).float()
+
+                data_aug = self._to_var(data_aug, device)
+                train_loss += self._train_one_step(data_aug)
 
                 if self.rank ==0:
                     tbar.set_description('%s: Epoch: %d: ' % (self.backbone_name,epoch + 1))
