@@ -11,7 +11,8 @@ class WaveAttention_res(nn.Module):
                  num_heads=8,
                  qkv_bias=False,
                  attn_drop=0.5,
-                 proj_drop=0.5
+                 proj_drop=0.5,
+                 high_ratio=1.0
                  ):
         super().__init__()
         assert dim % 2 == 0, "dim should be divisible by 2"
@@ -19,17 +20,18 @@ class WaveAttention_res(nn.Module):
         self.dwt = DWT_1D(wave='haar')
         self.idwt = IDWT_1D(wave='haar')
         self.attn_l = Attention(dim // 2, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
+        self.high_ratio = high_ratio
         # self.attn_h = Attention(dim // 2, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=attn_drop)
 
     def forward(self, x):
         # [128, 126, 768]   [B, N, D]
         B, N, _ = x.shape
         x = self.dwt(x)             # [128, 252, 384]   [B, 2*N, D//2]
-        x_h = x[:,N:,:]
+        x_h = x[:,N:,:] * self.high_ratio
         x = x[:,:N,:]
 
         x = self.attn_l(x)
-        x_h = self.attn_h(x_h)
+        # x_h = self.attn_h(x_h)
 
         x = torch.cat([x,x_h], dim=1)
         x = self.idwt(x)

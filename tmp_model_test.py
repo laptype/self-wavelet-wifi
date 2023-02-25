@@ -26,7 +26,7 @@ class Config:
     check_point_path = ''
 
     # backbone_name = 'wavevit_wave12_4_test_16'
-    backbone_name = 'wavevit_wavel_4_s_16_0.4_0.1'
+    backbone_name = 'wavevit_waveres_4_s_16_0.4_0.1_0.9'
     head_name= 'wifi_ar_span_cls'
     strategy_name = 'vit_span_cls_raw'
 

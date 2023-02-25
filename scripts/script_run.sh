@@ -27,7 +27,7 @@ lr_rate_adjust_factor=0.5
 #lr_rate_adjust_factor=0.2
 save_epoch=501
 eval_epoch=501
-patience=80
+patience=60
 
 test_batch_size=$6
 
@@ -38,7 +38,7 @@ datasource_path=$8
 tab=$9
 
 echo "========================${dataset_name}-${backbone_name}-${strategy_name}-TRAIN========================"
-CUDA_VISIBLE_DEVICES=1,3 ${python} -m torch.distributed.launch --nproc_per_node 2 --master_port='29501' --use_env /home/lanbo/wifi_wavelet/main.py \
+CUDA_VISIBLE_DEVICES=0,1 ${python} -m torch.distributed.launch --nproc_per_node 2 --master_port='29501' --use_env /home/lanbo/wifi_wavelet/main.py \
 --dataset_name ${dataset_name} --gpu_device ${cuda} \
 --backbone_name ${backbone_name} --head_name ${head_name} --strategy_name ${strategy_name} \
 --train_batch_size ${train_batch_size} --eval_batch_size ${eval_batch_size} --num_epoch ${num_epoch} \

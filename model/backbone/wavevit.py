@@ -20,7 +20,8 @@ from ..function import (
     WaveAttention_test,
     WaveAttention_wave2_2,
 WaveAttention_lh_res,
-WaveAttention_lh_l
+WaveAttention_lh_l,
+WaveAttention_res
 )
 from ..model_config import ModelConfig
 
@@ -44,10 +45,15 @@ class WaveVitConfig(ModelConfig):
     attn_type = 'wave'
     norm_layer = nn.LayerNorm
 
+    high_ratio = 1.0
+
     def __init__(self, model_name: str):
         super(WaveVitConfig, self).__init__(model_name)
         # wavevit_wave_4_s_16_0.5
-        _, attn_type, attn_type_layer, scale, patch_size, dropout, droppath = model_name.split('_')
+        _, attn_type, attn_type_layer, scale, patch_size, dropout, droppath, *list = model_name.split('_')
+        if (len(list) != 0):
+            self.high_ratio = float(list[0])
+
         self.attn_type_layer = int(attn_type_layer)
         self.patch_size = int(patch_size)
         self.attn_type = attn_type
@@ -107,7 +113,8 @@ class Block(nn.Module):
                  attn_drop = 0.5,
                  init_values=None,
                  drop_path=0.1,
-                 sr_ratio=1
+                 sr_ratio=1,
+                 high_ratio=1.0
                  ):
         super().__init__()
 
@@ -140,6 +147,9 @@ class Block(nn.Module):
             self.attn = WaveAttention_lh_res(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
         elif attn_type == 'wavel':
             self.attn = WaveAttention_lh_l(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,attn_drop=attn_drop, proj_drop=attn_drop)
+        elif attn_type == 'waveres':
+            self.attn = WaveAttention_res(dim=dim, N_dim=N_dim, num_heads=num_heads, qkv_bias=qkv_bias,
+                                           attn_drop=attn_drop, proj_drop=attn_drop, high_ratio=high_ratio)
 
         self.apply(self._init_weights)
 
@@ -172,6 +182,7 @@ class WaveVit(nn.Module):
                  # dim_mlp_hidden = 2048,
                  dropout = 0.5,
                  drop_path = 0.1,
+                 high_ratio=1.0,
                  expansion_factor=4,
                  depth = 12,
                  MAX_PATCH_NUMS = 1000,
@@ -214,7 +225,8 @@ class WaveVit(nn.Module):
                                     # attn_type='timm',
                                     drop_path=drop_path,
                                     attn_type=self.attn_type,
-                                    sr_ratio=1))
+                                    sr_ratio=1,
+                                    high_ratio=high_ratio))
 
         self.blocks = nn.ModuleList(model_list)
         self.norm = norm_layer(embed_dim)
@@ -285,6 +297,7 @@ def waveVit_wifi(config: WaveVitConfig):
     model = WaveVit(
         dropout=config.dropout,
         drop_path=config.droppath,
+        high_ratio=config.high_ratio,
         model_name=config.model_name,
         num_classes=config.num_classes,
         n_channel=config.n_channel,
