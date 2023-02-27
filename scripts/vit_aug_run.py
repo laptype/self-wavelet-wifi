@@ -52,11 +52,11 @@ if __name__ == '__main__':
             strategy_name = module[1]
             batch_size = module[2]
 
-            log_name = 'day_2_23'
-            tab = 'day_2_23'
-            datasource_path = '/home/lanbo/dataset/wifi_violence_processed_loc/'
+            log_name = 'day_2_27'
+            tab = 'day_2_27'
+            datasource_path = '/home/WangFei/data/wifi_violence_dataset/wifi_violence_processed_loc/'
 
-            log_path = os.path.join('/home/lanbo/wifi_wavelet/log', log_name)
+            log_path = os.path.join('/home/WangFei/data/wifi_violence_dataset/wifi_violence/log/', log_name)
             if not os.path.exists(log_path):
                 os.makedirs(log_path)
 
