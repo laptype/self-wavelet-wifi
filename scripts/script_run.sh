@@ -3,6 +3,7 @@
 # ./script_run [cuda] [dataset_name] [backbone_name] [head_name] [strategy_name] [batch_size]
 
 python="/home/lanbo/anaconda3/envs/test/bin/python3"
+cp_path="/home/WangFei/data/wifi_violence_dataset/wifi_violence/result/checkpoint/"
 
 cuda=$1
 dataset_name=$2
@@ -45,6 +46,7 @@ CUDA_VISIBLE_DEVICES=0,1 ${python} -m torch.distributed.launch --nproc_per_node 
 --opt_method ${opt_method} --lr_rate ${lr_rate} --weight_decay ${weight_decay} \
 --lr_rate_adjust_epoch ${lr_rate_adjust_epoch} --lr_rate_adjust_factor ${lr_rate_adjust_factor}  \
 --save_epoch ${save_epoch} --eval_epoch ${eval_epoch} --patience ${patience} --is_train true \
+-- check_point_path "${cp_path}"\
 --datasource_path "${datasource_path}" --tab "${tab}"\
 > ${log_path}/${dataset_name}-${backbone_name}-${strategy_name}-TRAIN.log
 
